@@ -19,10 +19,15 @@ export const serverEnvSchema = z
     LOG_LEVEL: z.enum(["trace", "debug", "info", "warn", "error", "fatal"]).default("info"),
     TURNSTILE_ENABLED: bool.default(false),
     TURNSTILE_SECRET_KEY: nonEmpty.optional(),
+    // Deterministic fake Gemini for e2e and offline dev. Never allowed in production.
+    AI_MOCK: bool.default(false),
   })
   .superRefine((env, ctx) => {
     if (env.TURNSTILE_ENABLED && !env.TURNSTILE_SECRET_KEY) {
       ctx.addIssue({ code: "custom", path: ["TURNSTILE_SECRET_KEY"], message: "required when enabled" });
+    }
+    if (env.AI_MOCK && env.APP_ENV === "production") {
+      ctx.addIssue({ code: "custom", path: ["AI_MOCK"], message: "must be false in production" });
     }
     if (env.SUPABASE_SERVICE_ROLE_KEY === env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
       ctx.addIssue({

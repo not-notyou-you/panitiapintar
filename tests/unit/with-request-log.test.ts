@@ -34,7 +34,13 @@ describe("withRequestLog()", () => {
     const res = await handler(req(), {});
     const body = await res.json();
     expect(res.status).toBe(500);
-    expect(body).toEqual({ error: "internal_error", requestId: res.headers.get("x-request-id") });
+    expect(body).toEqual({
+      error: {
+        code: "INTERNAL",
+        message: "Terjadi kesalahan. Coba lagi nanti.",
+        requestId: res.headers.get("x-request-id"),
+      },
+    });
     expect(JSON.stringify(body)).not.toContain("hunter2");
     expect(json()[0]).toMatchObject({ event: "http.request.failed", level: "error" });
     expect(output()).not.toContain("a@contoh.test");

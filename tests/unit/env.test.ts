@@ -38,6 +38,11 @@ describe("parseServerEnv", () => {
     expect(problems({ ...validEnv, TURNSTILE_ENABLED: "true" })[0]).toMatch(/^TURNSTILE_SECRET_KEY:/);
   });
 
+  it("rejects AI_MOCK in production", () => {
+    expect(problems({ ...validEnv, APP_ENV: "production", AI_MOCK: "true" })[0]).toMatch(/^AI_MOCK:/);
+    expect(problems({ ...validEnv, APP_ENV: "preview", AI_MOCK: "true" })).toEqual([]);
+  });
+
   it("rejects secrets under the NEXT_PUBLIC_ prefix", () => {
     expect(problems({ ...validEnv, NEXT_PUBLIC_GEMINI_API_KEY: "leak" })[0]).toMatch(
       /^NEXT_PUBLIC_GEMINI_API_KEY: secrets must not/,
