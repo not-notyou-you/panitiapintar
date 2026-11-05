@@ -1,0 +1,15 @@
+node_modules/
+.next/
+.env*
+!.env.example
+coverage/
+playwright-report/
+test-results/
+eval/results/
+.vercel/
+.supabase/
+panitiapintar-docs/
+panitiapintar-docs.zip
+/PROMPTS.md
+*.tsbuildinfo
+next-env.d.ts

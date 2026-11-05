@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>PanitiaPintar UI Preview</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400;600;700&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#e4e4e4;--floor:#c9c9c9;--card:#f2f2f2;--card-hi:#fafafa;--card-lo:#c4c4c4;
+  --line:#2b2b2b;--tx:#2b2b2b;--mut:#5f5f5f;
+  --acc:#005795;--acc-dk:#003a63;--acc-lt:#3d82b8;--on-acc:#f2f2f2;
+  --internal:#2b2b2b;--warn:#a11d2b;--warn-bg:#f6dfe2;
+  --f-ui:"Pixelify Sans","Silkscreen","Courier New",monospace;
+  --f-body:"IBM Plex Mono","Courier New",monospace;
+}
+*{box-sizing:border-box;border-radius:0}
+body{margin:0;font-family:var(--f-body);font-size:14px;color:var(--tx);min-height:100vh;
+  background:linear-gradient(180deg,var(--bg) 0 72%,var(--floor) 72%)}
+body::before{content:"";position:fixed;right:6%;top:72%;width:240px;height:64px;margin-top:-64px;background:var(--acc);
+  clip-path:polygon(0 100%,18% 35%,34% 62%,55% 0,76% 48%,100% 100%);opacity:.45;z-index:-1}
+.wrap{max-width:1180px;margin:0 auto;padding:28px 16px;display:grid;grid-template-columns:380px 1fr;gap:24px;align-items:start}
+@media(max-width:900px){.wrap{grid-template-columns:1fr}}
+h1,h2,h3,button,.badge,.label,.tbar{font-family:var(--f-ui)}
+
+/* window */
+.win{background:var(--card);border:4px solid var(--line);position:relative;padding:42px 16px 16px;
+  box-shadow:inset -4px -4px 0 var(--card-lo),inset 4px 4px 0 var(--card-hi),6px 6px 0 var(--line)}
+.tbar{position:absolute;left:0;right:0;top:0;height:28px;background:var(--acc);border-bottom:4px solid var(--line);
+  color:var(--on-acc);font-size:13px;text-transform:uppercase;letter-spacing:.04em;display:flex;align-items:center;gap:8px;padding:0 34px 0 10px}
+.tbar .x{position:absolute;right:6px;top:3px;width:18px;height:18px;background:var(--card);border:2px solid var(--line);
+  color:var(--line);font-size:12px;line-height:13px;text-align:center}
+.tbar svg{width:14px;height:14px;flex:none}
+
+.top{grid-column:1/-1;display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap}
+.brand{display:flex;gap:14px;align-items:center}
+.logo{width:44px;height:44px;background:var(--acc);border:4px solid var(--line);display:grid;place-items:center}
+.logo i{width:16px;height:16px;background:var(--on-acc);transform:rotate(45deg);display:block}
+h1{font-size:20px;margin:0;text-transform:uppercase;letter-spacing:.04em}
+.sub{margin:4px 0 0;font-size:12px;color:var(--mut)}
+.status{display:flex;gap:8px;align-items:center;font-family:var(--f-ui);font-size:12px;border:3px solid var(--line);padding:4px 10px;background:var(--card-hi)}
+.dot{width:10px;height:10px;background:var(--acc);border:2px solid var(--line);animation:b 1s steps(2) infinite}
+@keyframes b{50%{background:var(--card)}}
+@media(prefers-reduced-motion:reduce){.dot{animation:none}}
+
+/* chat */
+.event{font-size:12px;color:var(--mut);margin:0 0 12px}
+.event b{font-family:var(--f-ui);font-size:16px;color:var(--tx);display:block;text-transform:uppercase}
+.notice{border:3px solid var(--line);background:#dce8f2;padding:8px 10px;font-size:12px;margin-bottom:12px;display:flex;gap:8px}
+.notice::before{content:"";width:10px;height:10px;flex:none;margin-top:3px;background:var(--acc);border:2px solid var(--line)}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
+.chip{font-family:var(--f-body);font-size:12px;background:var(--card-hi);border:3px solid var(--line);padding:5px 8px;cursor:pointer;box-shadow:3px 3px 0 var(--line)}
+.chip:hover{background:#dce8f2}
+.log{display:flex;flex-direction:column;gap:12px;min-height:250px}
+.msg{max-width:88%;padding:9px 11px;border:3px solid var(--line);font-size:13px;line-height:1.5}
+.msg.me{align-self:flex-end;background:var(--acc);color:var(--on-acc);box-shadow:inset -3px -3px 0 var(--acc-dk),inset 3px 3px 0 var(--acc-lt)}
+.msg.bot{align-self:flex-start;background:var(--card-hi);box-shadow:4px 4px 0 var(--line)}
+.src{display:block;margin-top:6px;font-size:11px;color:var(--mut)}
+.src::before{content:"SUMBER ";font-family:var(--f-ui);color:var(--acc)}
+.typing{display:flex;gap:5px}.typing i{width:8px;height:8px;background:var(--line);animation:t 1.2s steps(1) infinite}
+.typing i:nth-child(2){animation-delay:.4s}.typing i:nth-child(3){animation-delay:.8s}@keyframes t{50%{background:var(--card-lo)}}
+.pii{border:3px solid var(--warn);background:var(--warn-bg);color:var(--warn);font-size:12px;padding:6px 8px;margin-top:12px}
+form{display:flex;gap:8px;margin-top:10px}
+input[type=text]{flex:1;font-family:var(--f-body);font-size:13px;padding:10px;border:3px solid var(--line);background:#fff;
+  box-shadow:inset 3px 3px 0 var(--card-lo);min-width:0}
+input:focus,button:focus-visible,.chip:focus-visible{outline:3px solid var(--acc);outline-offset:2px}
+.btn{background:var(--acc);color:var(--on-acc);border:4px solid var(--line);padding:9px 14px;font-size:13px;text-transform:uppercase;cursor:pointer;
+  box-shadow:inset -4px -4px 0 var(--acc-dk),inset 4px 4px 0 var(--acc-lt)}
+.btn:active{box-shadow:inset 4px 4px 0 var(--acc-dk)}
+.btn.ghost{background:var(--card-hi);color:var(--tx);box-shadow:inset -4px -4px 0 var(--card-lo),inset 4px 4px 0 #fff}
+.foot-note{font-size:11px;color:var(--mut);margin-top:10px}
+
+/* admin */
+.stack{display:grid;gap:24px}
+.metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+@media(max-width:600px){.metrics{grid-template-columns:1fr}}
+.m{background:var(--card);border:4px solid var(--line);padding:12px 14px;box-shadow:inset -4px -4px 0 var(--card-lo),inset 4px 4px 0 var(--card-hi),6px 6px 0 var(--line)}
+.label{font-size:11px;color:var(--mut);text-transform:uppercase;letter-spacing:.06em}
+.m b{display:block;font-family:var(--f-ui);font-size:26px;margin-top:4px}
+.tabs{display:flex;gap:0;margin-bottom:14px;flex-wrap:wrap}
+.tab{font-family:var(--f-ui);font-size:12px;text-transform:uppercase;padding:6px 12px;border:3px solid var(--line);margin-right:-3px;background:var(--card-hi);cursor:pointer}
+.tab[aria-selected=true]{background:var(--acc);color:var(--on-acc)}
+.tablewrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:12px;border:3px solid var(--line);min-width:560px}
+th{font-family:var(--f-ui);font-weight:600;text-transform:uppercase;text-align:left;background:var(--line);color:var(--card);padding:7px 8px}
+td{padding:8px;border-top:2px solid var(--line)}
+tr:nth-child(even) td{background:var(--card-hi)}
+.badge{display:inline-block;font-size:11px;text-transform:uppercase;padding:2px 6px;border:2px solid var(--line);letter-spacing:.04em}
+.b-pub{background:var(--acc);color:var(--on-acc)}
+.b-int{background:var(--internal);color:var(--card)}
+.b-ok{background:var(--card-hi)}
+.b-rev{background:#dce8f2;color:var(--acc-dk)}
+.b-err{background:var(--warn-bg);color:var(--warn);border-color:var(--warn)}
+.sq{display:inline-block;width:10px;height:10px;border:2px solid var(--line);margin-right:6px;vertical-align:-1px}
+.sq.ok{background:var(--card-lo)}.sq.bad{background:var(--warn)}
+.head{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+.head h2{margin:0;font-size:15px;text-transform:uppercase}
+.foot{grid-column:1/-1;font-family:var(--f-ui);font-size:12px;text-align:center;text-transform:uppercase;letter-spacing:.1em}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="win top">
+    <div class="tbar">PanitiaPintar.exe<span class="x" aria-hidden="true">x</span></div>
+    <div class="brand">
+      <div class="logo" aria-hidden="true"><i></i></div>
+      <div><h1>PanitiaPintar</h1><p class="sub">Chatbot dokumen untuk kepanitiaan acara kampus</p></div>
+    </div>
+    <div class="status"><span class="dot"></span><span>3 acara aktif</span></div>
+  </header>
+
+  <!-- MODE PUBLIK -->
+  <section class="win" aria-label="Chat publik">
+    <div class="tbar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 5h16v11H9l-5 4z"/></svg>Chat publik<span class="x" aria-hidden="true">x</span></div>
+    <p class="event"><b>Festival Teknologi Fiktif</b>14–15 Nov 2026 · Lecture Hall C</p>
+    <div class="notice">Jangan ketik data pribadi. Dijawab oleh AI (Gemini) dari dokumen resmi panitia.</div>
+    <div class="chips">
+      <button class="chip" type="button">Jam berapa mulai?</button>
+      <button class="chip" type="button">Lokasinya di mana?</button>
+      <button class="chip" type="button">Dress code?</button>
+    </div>
+    <div class="log" role="log" aria-live="polite">
+      <div class="msg me">Parkir motor di mana?</div>
+      <div class="msg bot">Parkir motor tersedia di basement Gedung B, masuk dari gerbang barat.<span class="src">Guidebook · hal. 4</span></div>
+      <div class="msg me">Berapa anggaran acara ini?</div>
+      <div class="msg bot">Informasi ini belum tersedia di dokumen panitia. Hubungi narahubung resmi: @festtekfiktif</div>
+      <div class="msg bot" aria-label="Menunggu jawaban"><span class="typing"><i></i><i></i><i></i></span></div>
+    </div>
+    <div class="pii">Pesanmu sepertinya berisi nomor HP. Hapus dulu?</div>
+    <form onsubmit="return false"><input type="text" placeholder="Tulis pertanyaan tentang acara ini…" aria-label="Pertanyaan"><button class="btn">Kirim</button></form>
+    <p class="foot-note">Dokumen diperbarui 10 Nov 2026</p>
+  </section>
+
+  <!-- ADMIN -->
+  <div class="stack">
+    <div class="metrics">
+      <div class="m"><span class="label">Pertanyaan hari ini</span><b>214</b></div>
+      <div class="m"><span class="label">Terjawab dari dokumen</span><b>91%</b></div>
+      <div class="m"><span class="label">Data pribadi disensor</span><b>7</b></div>
+    </div>
+
+    <section class="win" aria-label="Kelola dokumen">
+      <div class="tbar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 3h9l4 4v14H6z"/></svg>Admin · Festival Teknologi Fiktif<span class="x" aria-hidden="true">x</span></div>
+      <div class="tabs" role="tablist">
+        <span class="tab" role="tab" aria-selected="true">Dokumen</span><span class="tab" role="tab" aria-selected="false">Anggota</span>
+        <span class="tab" role="tab" aria-selected="false">QR Code</span><span class="tab" role="tab" aria-selected="false">Chat Log</span>
+      </div>
+      <div class="head"><h2>Dokumen (5/10)</h2><button class="btn">+ Unggah</button></div>
+      <div class="tablewrap"><table>
+        <thead><tr><th>Judul</th><th>Status</th><th>Visibilitas</th><th>Data pribadi</th><th>Diperbarui</th></tr></thead>
+        <tbody>
+          <tr><td>Guidebook peserta</td><td><span class="badge b-ok">Disetujui</span></td><td><span class="badge b-pub">Publik</span></td><td><span class="sq ok"></span>Bersih</td><td>10 Nov</td></tr>
+          <tr><td>Rundown publik</td><td><span class="badge b-ok">Disetujui</span></td><td><span class="badge b-pub">Publik</span></td><td><span class="sq ok"></span>Bersih</td><td>10 Nov</td></tr>
+          <tr><td>Anggaran v3</td><td><span class="badge b-ok">Disetujui</span></td><td><span class="badge b-int">Internal</span></td><td><span class="sq bad"></span>2 disensor</td><td>01 Nov</td></tr>
+          <tr><td>Notulensi rapat 3</td><td><span class="badge b-rev">Perlu ditinjau</span></td><td><span class="badge b-int">Internal</span></td><td><span class="sq ok"></span>Bersih</td><td>28 Okt</td></tr>
+          <tr><td>FAQ tambahan</td><td><span class="badge b-err">Gagal</span></td><td><span class="badge b-int">Internal</span></td><td>—</td><td>27 Okt</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+  </div>
+
+  <footer class="foot">PanitiaPintar · AI706 · Data contoh fiktif</footer>
+</div>
+</body>
+</html>
