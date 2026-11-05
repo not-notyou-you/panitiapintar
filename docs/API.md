@@ -78,14 +78,16 @@ Akses: admin. Mengulang perapihan untuk status `refine_failed`. Rate limit `refi
 ### Server actions (admin)
 | Action | Input | Catatan |
 |---|---|---|
-| `approveDocument` | `{ documentId, expectedVersion, editedContent?: string(..200000) }` | Jika ada edit: `redact()` lagi, simpan versi `admin_edited`. Audit wajib. |
-| `rejectDocument` | `{ documentId, expectedVersion, reasonCategory }` | Audit wajib |
-| `setVisibility` | `{ documentId, visibility, expectedVersion }` | Panggil RPC `set_document_visibility`; tolak `public` bila `pii_summary` versi terkini tidak kosong |
+| `approveDocument` | `{ documentId, expectedVersion, editedContent?: string(..200000) }` | Jika ada edit: `redact()` lagi, simpan versi `admin_edited` (JWT admin, `created_by = auth.uid()`), lalu RPC `approve_document(p_doc, p_version_id, p_expected_version, p_request_id)`. Audit ditulis di dalam RPC (satu transaksi). |
+| `rejectDocument` | `{ documentId, expectedVersion, reasonCategory }` | RPC `reject_document(p_doc, p_reason_category, p_expected_version, p_request_id)`. `reasonCategory` berupa slug `^[a-z][a-z_]{0,39}$`, bukan teks bebas. Audit di dalam RPC. |
+| `setVisibility` | `{ documentId, visibility, expectedVersion }` | Tolak `public` bila `pii_summary` versi terkini tidak kosong, lalu RPC `set_document_visibility(p_doc, p_visibility, p_expected_version, p_request_id)`. Audit di dalam RPC. |
 | `deleteDocument` | `{ documentId }` | Hapus file storage + baris; audit |
 | `createCommittee` | `{ name, slug, eventDate?, location?, contactPublic }` | Super admin |
 | `archiveCommittee` | `{ committeeId }` | Super admin |
 | `inviteMember` | `{ committeeId, email, role }` | Admin; email tidak dicatat mentah |
 | `changeMemberRole` / `removeMember` | `{ committeeId, userId, role? }` | Admin; tidak boleh menghapus admin terakhir |
+
+Ketiga RPC dokumen selalu menerima `requestId` dari request yang sedang berjalan (format `req_` + ULID; selain itu ditolak `invalid_request_id`) dan mengembalikan `version` baru. Pemetaan error RPC → HTTP: `40001 conflict` → 409 `CONFLICT`; `42501 forbidden` → 403 `FORBIDDEN`; `P0002 not_found` → 404; `22023` (`not_approved`, `invalid_transition`, `invalid_version`, `invalid_reason`) → 400 `INVALID_INPUT`. Kolom status dokumen tidak bisa diubah dengan `UPDATE` langsung (lihat DATABASE §2b).
 
 ### `GET /api/qr/[slug]`
 Akses: admin kepanitiaan. Mengembalikan PNG/SVG QR ke `APP_URL/e/[slug]`. Parameter `?format=png|svg&size=512|1024`.

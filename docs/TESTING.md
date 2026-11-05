@@ -17,6 +17,8 @@ Test unit dan keamanan **tidak memanggil Gemini sungguhan**; gunakan mock `lib/a
 | Test | Kontrol | Skenario |
 |---|---|---|
 | `rls.test.ts` | SEC-01, SEC-03 | Sebagai `anon`: select `documents` → 0 baris. Anggota A: baca dokumen B → 0 baris. Member: update visibilitas → ditolak. |
+| `harden.test.ts` | SEC-04, SEC-13 | Migrasi 0004: `UPDATE` langsung kolom terlindungi sebagai admin → `42501`; insert `approved` → ditolak; approve dengan `version_id` dokumen lain → `invalid_version`; `expected_version` basi → `40001`; `audit_logs.request_id` terisi; `anon`/`authenticated` tanpa grant tidak bisa `execute`; `anon` select `committees.created_by` → ditolak |
+| `documents_guard.test.sql` | SEC-04 | pgTAP (`npx supabase test db`): trigger tetap menolak walau grant kolom terlanjur dilebarkan |
 | `public-context.test.ts` | SEC-01 | `public_context(slug)` tidak pernah mengembalikan dokumen `internal` atau non-`approved`, termasuk dari acara diarsipkan |
 | `redact.test.ts` | SEC-05 | ≥ 40 kasus: berbagai format HP (`0812…`, `+62 812-…`, `62812…`), NIK, NIM, email, rekening dengan spasi, digit full-width, zero-width char; plus kasus negatif (tanggal, jam, harga "Rp150.000" tidak teredaksi) |
 | `prompt-assembly.test.ts` | SEC-05, SEC-06 | Snapshot prompt final tidak berisi PII palsu; tag `</documents>` di isi dokumen ter-escape |
@@ -59,6 +61,6 @@ Jalankan evaluasi dengan jeda antarpermintaan agar tidak menghabiskan kuota tier
 ## 5. CI (GitHub Actions)
 
 ```
-npm ci → lint → typecheck → test (unit) → supabase start → test:integration → test:security → npm audit --audit-level=high
+npm ci → lint → typecheck → test (unit) → supabase start → supabase test db → test:integration → test:security → npm audit --audit-level=high
 ```
 Build gagal jika salah satu langkah gagal.

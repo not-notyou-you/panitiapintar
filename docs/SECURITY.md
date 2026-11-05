@@ -49,11 +49,16 @@ Model ancaman, kontrol keamanan, dan aturan implementasi. Setiap kontrol punya I
 - Penolakan dicatat `auth.access.denied` + `audit_logs` (outcome `denied`).
 
 ### SEC-04 · Alur dokumen aman
-- Dokumen baru selalu `internal` (dipaksa oleh policy insert).
-- Hanya dokumen `approved` yang bisa dijadikan `public` (dipaksa oleh `set_document_visibility`).
-- Ubah ke publik memerlukan dialog konfirmasi; jika `pii_summary` versi terkini tidak kosong, tombol publik dinonaktifkan sampai admin meredaksi.
+- Dokumen baru selalu `internal`, `uploaded`, versi 1, tanpa approval (dipaksa policy insert `0004_harden`).
+- Status, visibilitas, approval, `current_version_id`, `version`, `pii_summary`, dan `status_reason` **tidak bisa diubah dengan `UPDATE` langsung** oleh pengguna:
+  1. *Column privileges*: `authenticated` hanya punya `UPDATE (title)` pada `documents`.
+  2. Trigger `documents_guard_protected_columns` menolak perubahan kolom selain `title`/`updated_at`, kecuali dari fungsi resmi (flag transaksi `app.doc_rpc`) atau service role (pipeline: `refining` → `needs_review`/`refine_failed`).
+- Perubahan hanya lewat fungsi resmi `approve_document`, `reject_document`, `set_document_visibility`. Ketiganya mengecek peran (admin kepanitiaan atau super admin), optimistic locking (`version`), transisi status yang sah, lalu menulis `audit_logs` beserta `request_id` **dalam transaksi yang sama** (gagal audit = aksi batal).
+- Hanya dokumen `approved` yang bisa dijadikan `public`. `approve_document` hanya menerima versi `ai_refined`/`admin_edited` milik dokumen yang sama.
+- Admin hanya boleh menambah versi `admin_edited` atas namanya sendiri; versi `original_redacted` dan `ai_refined` hanya ditulis pipeline.
+- Ubah ke publik memerlukan dialog konfirmasi; jika `pii_summary` versi terkini tidak kosong, tombol publik dinonaktifkan sampai admin meredaksi (dicek di aplikasi sebelum RPC).
 - Setiap edit isi setelah approved mengembalikan status ke `needs_review`.
-- Optimistic locking (`version`) mencegah dua admin saling menimpa.
+- `anon` hanya bisa membaca kolom publik `committees` (`id, name, slug, event_date, location, contact_public, status`); halaman publik tidak boleh `select *`.
 
 ### SEC-05 · Redaksi data pribadi sebelum AI
 - `lib/privacy/redact.ts` mengganti pola berikut dengan label:
@@ -67,7 +72,7 @@ Model ancaman, kontrol keamanan, dan aturan implementasi. Setiap kontrol punya I
 | Nomor rekening / kartu | `[NOMOR_REKENING]` | deretan 10–19 digit (boleh dipisah spasi/strip) |
 | NPWP | `[NPWP]` | `\d{2}\.\d{3}\.\d{3}\.\d-\d{3}\.\d{3}` |
 
-- Urutan penerapan: dari pola paling spesifik ke paling umum (NPWP → NIK → NIM → HP → rekening → email).
+- Urutan penerapan: email → NPWP → NIK → NIM → HP → rekening. Email didahulukan karena pola digit akan memakan *local part* numerik (`081234567890@contoh.test`) dan menyisakan domain; sisanya dari pola paling spesifik ke paling umum.
 - Normalisasi sebelum pencocokan: Unicode NFKC, digit lebar penuh → ASCII, hapus zero-width characters.
 - `redact()` mengembalikan `{ text, found: { phone: 2, ... } }`; **nilai asli tidak pernah dikembalikan atau dicatat**.
 - Diterapkan pada: pertanyaan, riwayat chat, teks dokumen (saat unggah), dan **keluaran** AI.
@@ -116,7 +121,7 @@ Model ancaman, kontrol keamanan, dan aturan implementasi. Setiap kontrol punya I
 - Tidak ada `dangerouslySetInnerHTML` di seluruh kode (dicek ESLint).
 - Header keamanan (di `middleware.ts`):
   ```
-  Content-Security-Policy: default-src 'self'; script-src 'self' 'nonce-{n}'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'nonce-{n}' 'strict-dynamic'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
                            font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://*.supabase.co;
                            frame-ancestors 'none'; base-uri 'self'; form-action 'self'
   Strict-Transport-Security: max-age=63072000; includeSubDomains; preload
@@ -125,6 +130,8 @@ Model ancaman, kontrol keamanan, dan aturan implementasi. Setiap kontrol punya I
   Permissions-Policy: camera=(), microphone=(), geolocation=()
   X-Frame-Options: DENY
   ```
+- `'unsafe-eval'` ditambahkan ke `script-src` **hanya** bila `NODE_ENV === "development"` (bukan `APP_ENV`, karena build preview berjalan dalam mode production). Cabang ini ditulis sebagai literal di `middleware.ts` sehingga terbuang dari bundle production; `headers.test.ts` memeriksanya.
+- Nonce per request membuat halaman dirender dinamis; diterima karena halaman chat memang dinamis.
 
 ### SEC-10 · Manajemen rahasia
 - Semua env divalidasi `lib/env.ts` (zod) saat start; variabel rahasia tidak boleh berprefiks `NEXT_PUBLIC_`.

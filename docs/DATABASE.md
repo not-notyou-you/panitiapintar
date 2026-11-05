@@ -158,6 +158,39 @@ create table rate_limits (
 );
 ```
 
+## 2b. Pengerasan (migrasi `0004_harden.sql`)
+
+Menutup celah di `0001`–`0003` tanpa mengubah file lama. Sumber kebenaran: [`supabase/migrations/0004_harden.sql`](../supabase/migrations/0004_harden.sql).
+
+| Celah di 0001–0003 | Perbaikan di 0004 |
+|---|---|
+| `documents_admin_update` mengizinkan admin `UPDATE` `visibility`/`status`/`approved_*` langsung, sehingga cek approval, locking, dan audit terlewati | `revoke update on documents from anon, authenticated; grant update (title) … to authenticated` + trigger `documents_guard_protected_columns` (lapis kedua) |
+| Policy insert hanya mengecek `visibility = 'internal'` (admin bisa insert `status = 'approved'`) | `with check`: `internal`, `uploaded`, `approved_by`/`approved_at`/`current_version_id`/`status_reason` null, `version = 1`, `pii_summary = '{}'`, `uploaded_by = auth.uid()` |
+| Admin bisa menulis versi `ai_refined`/`original_redacted` palsu | Admin hanya `kind = 'admin_edited'` dengan `created_by = auth.uid()` |
+| `set_document_visibility` (3 argumen) tanpa `revoke`, audit tanpa `request_id` | Di-`drop`; diganti versi 4 argumen dengan `p_request_id` |
+| Default privileges Supabase memberi `EXECUTE` langsung ke `anon`/`authenticated`, jadi `revoke … from public` tidak cukup untuk `rate_limit_hit` & `purge_expired_logs` | `revoke execute … from anon, authenticated` eksplisit |
+| `anon` bisa membaca semua kolom `committees` (termasuk `created_by`) | `revoke select … from anon; grant select (id, name, slug, event_date, location, contact_public, status) … to anon` |
+
+### Trigger `documents_guard_protected_columns`
+`BEFORE UPDATE` pada `documents`: menolak (`42501 protected_column`) perubahan kolom apa pun selain `title` dan `updated_at`, kecuali:
+- `current_setting('app.doc_rpc', true) = 'on'`. Flag ini di-set lokal-transaksi (`set_config(…, true)`) hanya di dalam fungsi resmi, dan dimatikan lagi tepat setelah `UPDATE`;
+- `current_user = 'service_role'`: pipeline sistem (`uploaded` → `refining` → `needs_review`/`refine_failed`, `pii_summary`, `status_reason`).
+
+Seed yang perlu mengubah kolom terlindungi wajib men-set `app.doc_rpc` secara eksplisit.
+
+### Fungsi resmi dokumen
+Semua `security definer`, `set search_path = public`, `revoke all … from public, anon`, `grant execute … to authenticated`. Mengembalikan `version` baru.
+
+| Fungsi | Transisi sah | Audit (`action`, `metadata`) |
+|---|---|---|
+| `approve_document(p_doc, p_version_id, p_expected_version, p_request_id)` | `needs_review` → `approved`; `p_version_id` wajib milik dokumen yang sama dan `kind` `ai_refined`/`admin_edited` | `document.approve`, `{edited, versionId}` |
+| `reject_document(p_doc, p_reason_category, p_expected_version, p_request_id)` | `needs_review`/`refine_failed` → `rejected`; kategori berupa slug `^[a-z][a-z_]{0,39}$` | `document.reject`, `{reasonCategory, from}` |
+| `set_document_visibility(p_doc, p_visibility, p_expected_version, p_request_id)` | `public` hanya untuk `approved` | `document.visibility.changed`, `{from, to}` |
+
+Pengecekan bersama: peran admin kepanitiaan atau super admin (`42501 forbidden`), `version = p_expected_version` (`40001 conflict`), `p_request_id` berformat `req_` + ULID (`22023 invalid_request_id`). Audit ditulis di transaksi yang sama, jadi gagal audit berarti aksi batal.
+
+Helper internal `doc_rpc_actor_role(uuid)` dan `doc_rpc_check_request_id(text)` tidak bisa dipanggil pengguna.
+
 ## 3. Fungsi bantu (migrasi `0002_functions.sql`)
 
 ```sql
@@ -226,7 +259,7 @@ begin
 end $$;
 ```
 
-Catatan: pemeriksaan "bebas PII" untuk publik dilakukan di aplikasi sebelum memanggil fungsi ini (versi yang disetujui sudah melewati `redact()`), dan fungsi tetap menolak dokumen yang belum `approved`.
+Catatan: fungsi 3-argumen di atas digantikan versi 4-argumen di §2b. Pemeriksaan "bebas PII" untuk publik dilakukan di aplikasi sebelum memanggil fungsi ini (versi yang disetujui sudah melewati `redact()`), dan fungsi tetap menolak dokumen yang belum `approved`.
 
 ## 4. Row Level Security (migrasi `0003_rls.sql`)
 
@@ -328,4 +361,5 @@ grant execute on function purge_expired_logs(int,int,int) to service_role;
 
 - Satu perubahan skema = satu file migrasi baru, bernomor urut.
 - Setiap tabel baru **wajib** `enable row level security` di migrasi yang sama, beserta policy-nya dan test di `tests/security/rls.test.ts`.
-- Fungsi `security definer` **wajib** `set search_path = public` dan `revoke ... from public`.
+- Fungsi `security definer` **wajib** `set search_path = public` dan `revoke ... from public`, **serta** `revoke ... from anon, authenticated` bila tidak memang untuk mereka (default privileges Supabase memberi grant langsung).
+- Test SQL lapis trigger: `supabase/tests/database/*.test.sql` (pgTAP, `npx supabase test db`).
