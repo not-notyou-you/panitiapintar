@@ -61,16 +61,14 @@ describe.skipIf(!dbAvailable)("RLS", () => {
     });
 
     it("cannot insert documents", async () => {
-      const { error } = await anon()
-        .from("documents")
-        .insert({
-          committee_id: A.id,
-          title: "x",
-          storage_path: "x",
-          mime_type: "text/plain",
-          size_bytes: 1,
-          sha256: "x",
-        });
+      const { error } = await anon().from("documents").insert({
+        committee_id: A.id,
+        title: "x",
+        storage_path: "x",
+        mime_type: "text/plain",
+        size_bytes: 1,
+        sha256: "x",
+      });
       expect(error).not.toBeNull();
     });
 
