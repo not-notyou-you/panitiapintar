@@ -34,7 +34,8 @@ export default defineConfig({
           name: "security",
           include: ["tests/security/**/*.test.ts"],
           environment: "node",
-          setupFiles: ["tests/helpers/load-env.ts"],
+          // load-env first so real local Supabase keys win; unit-env only fills what is still missing.
+          setupFiles: ["tests/helpers/load-env.ts", "tests/helpers/unit-env.ts"],
           testTimeout: 30_000,
           hookTimeout: 60_000,
           fileParallelism: false,
