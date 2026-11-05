@@ -43,8 +43,10 @@ export function mockAnswer(prompt: string): string {
   let best = { score: 0, line: "", docId: "" };
   for (const m of prompt.matchAll(/<doc id="([^"]+)" title="[^"]*">\n([\s\S]*?)\n<\/doc>/g)) {
     for (const raw of unescape(m[2] ?? "").split("\n")) {
+      if (/^\s*#/.test(raw)) continue; // headings carry no answer
       const line = cleanLine(raw);
-      if (line.length < 12 || /^-+$/.test(line.replace(/\s/g, ""))) continue;
+      // Skip separators and FAQ question lines: they echo the question rather than answer it.
+      if (line.length < 12 || /^-+$/.test(line.replace(/\s/g, "")) || line.endsWith("?")) continue;
       const score = new Set(terms(line).filter((t) => wanted.has(t))).size;
       if (score > best.score) best = { score, line, docId: m[1] ?? "" };
     }

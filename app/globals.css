@@ -47,26 +47,277 @@
 }
 
 body {
+  margin: 0;
   min-height: 100dvh;
-  background: linear-gradient(to bottom, var(--bg) 70%, var(--floor) 70%);
+  background: linear-gradient(to bottom, var(--bg) 0 72%, var(--floor) 72%);
   color: var(--tx);
   font-family: var(--font-mono);
+  font-size: 14px;
 }
 
+/* Pixel mountain on the floor (INTERFACE §2 "Bentuk dan kedalaman"). */
+body::before {
+  content: "";
+  position: fixed;
+  right: 6%;
+  top: 72%;
+  width: 240px;
+  height: 64px;
+  margin-top: -64px;
+  background: var(--acc);
+  clip-path: polygon(0 100%, 18% 35%, 34% 62%, 55% 0, 76% 48%, 100% 100%);
+  opacity: 0.45;
+  z-index: -1;
+  pointer-events: none;
+}
+
+h1,
+h2,
+h3,
+button,
+.font-pixel {
+  font-family: var(--font-pixel);
+}
+
+:focus-visible {
+  outline: 3px solid var(--acc);
+  outline-offset: 2px;
+}
+
+/* ---- Window ---- */
 .win {
+  position: relative;
   border: 4px solid var(--line);
   background: var(--card);
+  padding: 42px 16px 16px;
   box-shadow:
     inset -4px -4px 0 var(--card-lo),
     inset 4px 4px 0 var(--card-hi),
     6px 6px 0 var(--line);
 }
-
 .win-title {
+  position: absolute;
+  inset: 0 0 auto 0;
   height: 28px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 34px 0 10px;
   background: var(--acc);
   color: var(--on-acc);
   border-bottom: 4px solid var(--line);
   font-family: var(--font-pixel);
+  font-size: 13px;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
+  overflow: hidden;
+  white-space: nowrap;
+}
+.win-x {
+  position: absolute;
+  right: 6px;
+  top: 3px;
+  width: 18px;
+  height: 18px;
+  background: var(--card);
+  border: 2px solid var(--line);
+  color: var(--line);
+  font-size: 12px;
+  line-height: 13px;
+  text-align: center;
+}
+.diamond {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  flex: none;
+  background: currentColor;
+  transform: rotate(45deg);
+}
+
+/* ---- Buttons ---- */
+.btn {
+  min-height: 44px;
+  padding: 8px 14px;
+  border: 4px solid var(--line);
+  background: var(--acc);
+  color: var(--on-acc);
+  font-size: 13px;
+  text-transform: uppercase;
+  cursor: pointer;
+  box-shadow:
+    inset -4px -4px 0 var(--acc-dk),
+    inset 4px 4px 0 var(--acc-lt);
+}
+.btn:active {
+  box-shadow: inset 4px 4px 0 var(--acc-dk);
+}
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+.btn-ghost {
+  background: var(--card-hi);
+  color: var(--tx);
+  box-shadow:
+    inset -4px -4px 0 var(--card-lo),
+    inset 4px 4px 0 #fff;
+}
+.btn-ghost:active {
+  box-shadow: inset 4px 4px 0 var(--card-lo);
+}
+.btn-danger {
+  background: var(--warn);
+  color: var(--on-acc);
+  box-shadow: none;
+}
+
+/* ---- Chat ---- */
+.notice {
+  display: flex;
+  gap: 8px;
+  padding: 8px 10px;
+  border: 3px solid var(--line);
+  background: var(--acc-tint);
+  font-size: 12px;
+}
+.notice::before {
+  content: "";
+  width: 10px;
+  height: 10px;
+  flex: none;
+  margin-top: 3px;
+  background: var(--acc);
+  border: 2px solid var(--line);
+}
+.chip {
+  min-height: 44px;
+  padding: 6px 10px;
+  border: 3px solid var(--line);
+  background: var(--card-hi);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  text-align: left;
+  cursor: pointer;
+  box-shadow: 3px 3px 0 var(--line);
+}
+.chip:hover {
+  background: var(--acc-tint);
+}
+.msg {
+  max-width: 88%;
+  padding: 9px 11px;
+  border: 3px solid var(--line);
+  font-size: 13px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+.msg-user {
+  align-self: flex-end;
+  background: var(--acc);
+  color: var(--on-acc);
+  box-shadow:
+    inset -3px -3px 0 var(--acc-dk),
+    inset 3px 3px 0 var(--acc-lt);
+}
+.msg-bot {
+  align-self: flex-start;
+  background: var(--card-hi);
+  box-shadow: 4px 4px 0 var(--line);
+}
+.msg-error {
+  align-self: flex-start;
+  background: var(--warn-bg);
+  color: var(--warn);
+  border-color: var(--warn);
+  box-shadow: 4px 4px 0 var(--warn);
+}
+.msg p {
+  margin: 0;
+}
+.msg p + p,
+.msg ul,
+.msg ol {
+  margin: 6px 0 0;
+  padding-left: 18px;
+}
+.msg a {
+  color: var(--acc);
+  text-decoration: underline;
+}
+.src {
+  display: block;
+  margin-top: 6px;
+  font-size: 11px;
+  color: var(--mut);
+}
+.src-label {
+  margin-right: 6px;
+  font-family: var(--font-pixel);
+  color: var(--acc);
+}
+.typing {
+  display: flex;
+  gap: 5px;
+  padding: 4px 0;
+}
+.typing i {
+  width: 8px;
+  height: 8px;
+  background: var(--line);
+  animation: typing 1.2s steps(1) infinite;
+}
+.typing i:nth-child(2) {
+  animation-delay: 0.4s;
+}
+.typing i:nth-child(3) {
+  animation-delay: 0.8s;
+}
+@keyframes typing {
+  50% {
+    background: var(--card-lo);
+  }
+}
+.pii {
+  padding: 8px;
+  border: 3px solid var(--warn);
+  background: var(--warn-bg);
+  color: var(--warn);
+  font-size: 12px;
+}
+.field {
+  flex: 1;
+  min-width: 0;
+  min-height: 44px;
+  padding: 10px;
+  border: 3px solid var(--line);
+  background: #fff;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  box-shadow: inset 3px 3px 0 var(--card-lo);
+}
+.field:focus {
+  outline: 3px solid var(--acc);
+  outline-offset: 2px;
+}
+.status-dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  background: var(--acc);
+  border: 2px solid var(--line);
+  animation: blink 1s steps(2) infinite;
+}
+@keyframes blink {
+  50% {
+    background: var(--card);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+  }
 }

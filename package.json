@@ -15,7 +15,7 @@
     "test": "vitest run --project unit",
     "test:integration": "vitest run --project integration",
     "test:security": "vitest run --project security",
-    "test:e2e": "node -e \"console.log('test:e2e: placeholder, Playwright ditambahkan di Fase 1')\"",
+    "test:e2e": "playwright test",
     "seed:build": "tsx scripts/build-seed.ts"
   },
   "dependencies": {
