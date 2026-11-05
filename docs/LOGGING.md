@@ -121,6 +121,7 @@ Format nama: `domain.action.result`.
 | `generate.rundown.completed` | info | `userId`, `rows` |
 | `generate.checklist.completed` | info | `userId`, `items` |
 | `chat.pii.redacted` | info | `types[]`, `count`, `stage` (`input`/`history`/`output`) |
+| `chat.log.write_failed` | error | `mode` (jawaban tetap dikirim ke pengguna) |
 
 ### AI
 | Event | Level | Field |
@@ -134,6 +135,7 @@ Format nama: `domain.action.result`.
 | `ai.call.timeout` | error | `timeoutMs` |
 | `ai.call.failed` | error | `error.code` |
 | `ai.output.invalid` | error | `purpose`, `validationErrors` (path saja) |
+| `ai.calls.write_failed` | error | `purpose` (panggilan AI tetap dilanjutkan) |
 
 ### Dokumen
 | Event | Level | Field |

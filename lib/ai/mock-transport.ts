@@ -42,11 +42,11 @@ export function mockAnswer(prompt: string): string {
   const wanted = new Set(terms(question));
   let best = { score: 0, line: "", docId: "" };
   for (const m of prompt.matchAll(/<doc id="([^"]+)" title="[^"]*">\n([\s\S]*?)\n<\/doc>/g)) {
-    for (const raw of unescape(m[2]).split("\n")) {
+    for (const raw of unescape(m[2] ?? "").split("\n")) {
       const line = cleanLine(raw);
       if (line.length < 12 || /^-+$/.test(line.replace(/\s/g, ""))) continue;
       const score = new Set(terms(line).filter((t) => wanted.has(t))).size;
-      if (score > best.score) best = { score, line, docId: m[1] };
+      if (score > best.score) best = { score, line, docId: m[1] ?? "" };
     }
   }
   if (best.score === 0) return JSON.stringify({ answer: "NOT_FOUND", source_doc_ids: [] });

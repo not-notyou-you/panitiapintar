@@ -60,6 +60,23 @@ const config = [
       ],
     },
   },
+  {
+    // SEC-01: the public context loader must stay on the anon client so the DB decides visibility.
+    files: ["lib/context/public.ts"],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            {
+              group: ["**/supabase/service", "**/supabase/service.ts", "@/lib/supabase/service"],
+              message: "Public context must read via the anon client and public_context() only (SEC-01).",
+            },
+          ],
+        },
+      ],
+    },
+  },
 ];
 
 export default config;

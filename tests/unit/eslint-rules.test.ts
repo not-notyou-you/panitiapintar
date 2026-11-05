@@ -45,6 +45,11 @@ describe("security lint rules", () => {
     expect(await ruleIds(code, file)).toContain("no-restricted-syntax");
   });
 
+  it("rejects the service client in the public context loader", async () => {
+    const code = `import { serviceClient } from "@/lib/supabase/service";\nexport const c = serviceClient;\n`;
+    expect(await ruleIds(code, "lib/context/public.ts")).toContain("no-restricted-imports");
+  });
+
   it("still allows the service client in system code", async () => {
     const code = `import { serviceClient } from "@/lib/supabase/service";\nexport const c = serviceClient;\n`;
     expect(await ruleIds(code, "app/api/cron/retention/route.ts")).not.toContain("no-restricted-imports");

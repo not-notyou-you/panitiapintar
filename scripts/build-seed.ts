@@ -115,7 +115,8 @@ export function buildSeed(): string {
       if (isPublic && canaries.size > 0) throw new Error(`${dir.name}/${file}: public doc contains a canary`);
       if (!isPublic) {
         if (canaries.size !== 1) throw new Error(`${dir.name}/${file}: internal doc needs exactly one canary`);
-        const [code] = canaries;
+        const [code] = [...canaries];
+        if (!code) throw new Error(`${dir.name}/${file}: missing canary`);
         if (seenCanaries.has(code)) throw new Error(`${dir.name}/${file}: canary ${code} is not unique`);
         seenCanaries.add(code);
       }

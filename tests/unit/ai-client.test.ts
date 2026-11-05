@@ -81,7 +81,7 @@ describe("ai client", () => {
       input_tokens: 100,
       context_doc_ids: ["d1"],
     });
-    expect(t.rows[0].prompt_sha256).toMatch(/^[0-9a-f]{64}$/);
+    expect(t.rows[0]?.prompt_sha256).toMatch(/^[0-9a-f]{64}$/);
     expect(t.events()).toEqual(["ai.call.started", "ai.call.succeeded"]);
   });
 
