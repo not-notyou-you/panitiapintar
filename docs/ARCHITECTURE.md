@@ -123,13 +123,14 @@ panitiapintar/
 Sama dengan 5.1, tetapi langkah 3 memakai `userId`, langkah 4 diganti `requireMembership(committeeId)`, dan langkah 6 memakai query dengan JWT pengguna (RLS memastikan hanya kepanitiaan miliknya). Respons yang memakai dokumen internal diberi `containsInternal: true`.
 
 ### 5.3 Unggah dan perapihan
-1. `requireMembership(committeeId, 'admin')`.
-2. Validasi file: ekstensi + **magic bytes** + ukuran ≤ 10 MB + jumlah dokumen aktif ≤ 10.
-3. Simpan ke bucket privat; buat baris `documents` (`uploaded`, `internal`).
-4. Ekstraksi teks (timeout 30 dtk, maks. 200.000 karakter).
-5. `scanPii()` → simpan ringkasan temuan (jenis + jumlah, **bukan nilainya**) → `redact()`.
-6. Gemini `REFINE` → versi `ai_refined` → status `needs_review`.
-7. Admin meninjau di `/review`, boleh mengedit → **Approve** (audit) atau **Reject** (audit).
+Kode: `lib/api/documents.ts` (route), `lib/documents/{validate-file,extract,pipeline}.ts`, `lib/actions/documents.ts` (tinjau).
+1. Cek `Origin`, `requireMembership(committeeId, 'admin')`, rate limit `upload`.
+2. Validasi file: ekstensi + MIME + **magic bytes** + ukuran ≤ 10 MB; ekstraksi teks (timeout 30 dtk, maks. 200.000 karakter) **sebelum** apa pun disimpan, sehingga file rusak/terenkripsi langsung 4xx.
+3. Duplikat (sha256) dan kuota 10 dokumen aktif.
+4. `scanPii()` → ringkasan temuan (jenis + jumlah, **bukan nilainya**) → `redact()`.
+5. Baris `documents` (JWT admin: `uploaded`, `internal`) → file ke bucket privat `documents-raw/{committee_id}/{doc_id}.{ext}` (JWT admin) → service role: versi `original_redacted` + `pii_summary` + status `refining`. Respons 201.
+6. Setelah respons (`after()`): Gemini `REFINE` (timeout 45 dtk) → zod → Markdown → `redact()` lagi → versi `ai_refined` → `needs_review`; gagal → `refine_failed` + `status_reason` (`ai_unavailable`/`ai_invalid_output`/`internal`). Status `refining` > 3 menit dianggap gagal (`timeout`) saat dipantau, supaya fungsi yang terhenti tidak membuat dokumen macet.
+7. Admin meninjau di `/review` (asli vs hasil AI, penanda angka/tanggal dari `lib/documents/fact-diff.ts`), boleh mengedit (versi `admin_edited`, diredaksi ulang) → **Approve**/**Reject** lewat RPC (audit di transaksi yang sama).
 
 ## 6. Keandalan (robustness)
 

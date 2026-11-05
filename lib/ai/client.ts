@@ -31,6 +31,8 @@ export interface GenerateInput<T> {
   committeeId?: string | null;
   contextDocIds?: string[];
   log: Logger;
+  /** Per-attempt timeout override (refine handles long documents). */
+  timeoutMs?: number;
 }
 
 export type GenerateResult<T> =
@@ -63,13 +65,14 @@ export function createAiClient(deps: AiClientDeps) {
   const random = deps.random ?? Math.random;
 
   async function attempt<T>(input: GenerateInput<T>, model: string): Promise<AttemptOutcome<T>> {
+    const limitMs = input.timeoutMs ?? timeoutMs;
     const controller = new AbortController();
     let timer: ReturnType<typeof setTimeout> | undefined;
     const timeout = new Promise<"timeout">((resolve) => {
       timer = setTimeout(() => {
         controller.abort();
         resolve("timeout");
-      }, timeoutMs);
+      }, limitMs);
     });
     try {
       const res = await Promise.race([
@@ -81,10 +84,10 @@ export function createAiClient(deps: AiClientDeps) {
         }),
         timeout,
       ]);
-      if (res === "timeout") return { status: "timeout", timeoutMs, errorCode: "timeout", retryable: true };
+      if (res === "timeout") return { status: "timeout", timeoutMs: limitMs, errorCode: "timeout", retryable: true };
       return classifyResponse(res, input.parse);
     } catch (err) {
-      if (controller.signal.aborted) return { status: "timeout", timeoutMs, errorCode: "timeout", retryable: true };
+      if (controller.signal.aborted) return { status: "timeout", timeoutMs: limitMs, errorCode: "timeout", retryable: true };
       if (err instanceof AiTransportError) {
         if (err.httpStatus === 429) return { status: "rate_limited", errorCode: "http_429" };
         const retryable = err.httpStatus === undefined || err.httpStatus >= 500;

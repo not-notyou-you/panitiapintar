@@ -55,13 +55,38 @@ export function mockAnswer(prompt: string): string {
   return JSON.stringify({ answer: best.line.slice(0, 600), source_doc_ids: [best.docId] });
 }
 
+/** Refine stand-in: splits the source on Markdown headings; keeps text verbatim (no invented facts). */
+export function mockRefine(prompt: string): string {
+  const m = prompt.match(/<source_document title="([^"]*)">\n([\s\S]*)\n<\/source_document>/);
+  const source = unescape(m?.[2] ?? "");
+  if (source.includes("[[mock:invalid]]")) return "ini bukan JSON";
+  const title = unescape(m?.[1] ?? "").slice(0, 150) || "Dokumen";
+  const sections: { heading: string; body: string }[] = [];
+  let current = { heading: "Ringkasan", body: [] as string[] };
+  const flush = () => {
+    const body = current.body.join("\n").trim();
+    if (body) sections.push({ heading: current.heading, body: body.slice(0, 20_000) });
+  };
+  for (const line of source.split("\n")) {
+    const h = /^#{1,3}\s+(.+)$/.exec(line);
+    if (h) {
+      flush();
+      current = { heading: (h[1] ?? "").slice(0, 200), body: [] };
+    } else current.body.push(line);
+  }
+  flush();
+  if (sections.length === 0) sections.push({ heading: "Isi", body: source.slice(0, 20_000) || "-" });
+  const first = sections[0]?.body.replace(/\s+/g, " ") ?? "";
+  return JSON.stringify({ title, summary: first.slice(0, 200), sections: sections.slice(0, 30), faq: [] });
+}
+
 export function mockTransport(): AiTransport {
   return {
     async generate(req: TransportRequest): Promise<TransportResponse> {
       if (req.prompt.includes("[[mock:429]]")) throw new AiTransportError(429, "http_429");
       if (req.prompt.includes("[[mock:500]]")) throw new AiTransportError(500, "http_500");
       if (req.prompt.includes("[[mock:blocked]]")) return { text: "", blockReason: "SAFETY" };
-      const text = mockAnswer(req.prompt);
+      const text = req.prompt.startsWith("<source_document") ? mockRefine(req.prompt) : mockAnswer(req.prompt);
       return { text, inputTokens: Math.ceil(req.prompt.length / 4), outputTokens: Math.ceil(text.length / 4) };
     },
   };
