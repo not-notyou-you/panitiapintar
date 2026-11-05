@@ -10,7 +10,8 @@ Kontrak route handler dan server action. Semua body JSON divalidasi zod; skema a
   { "error": { "code": "RATE_LIMITED", "message": "Chatbot sedang ramai. Coba lagi dalam 1 menit.", "requestId": "req_01JD…" } }
   ```
 - `message` selalu Bahasa Indonesia dan aman ditampilkan; tidak pernah berisi stack trace atau detail internal.
-- Route yang mengubah data: cek `Origin` (SEC-11).
+- Route dan server action yang mengubah data: cek `Origin` (SEC-11). Origin kosong juga ditolak.
+- Server action mengembalikan `{ ok: true, data, requestId }` atau `{ ok: false, error: { code, message, requestId } }` (kode dari tabel di bawah). Logika ada di `lib/actions/*.ts`; `app/**/actions.ts` hanya pembungkus `"use server"`.
 
 ### Kode error
 
@@ -64,33 +65,43 @@ Akses: admin kepanitiaan. `multipart/form-data`: `committeeId`, `title` (1..150)
 ```ts
 Response 201 { documentId, status: "refining", piiSummary: { phone?: number, email?: number, ... }, requestId }
 ```
+Penolakan: tipe/MIME/magic bytes salah → 415; > 10 MB → 413; terenkripsi, makro, zip bomb, rusak, teks kosong/> 200.000 karakter, kuota → 422; duplikat → 409. Rate limit `upload` per user. `title` kosong → nama file tanpa ekstensi.
 Memulai ekstraksi → redaksi → perapihan. Klien memantau status lewat polling `GET /api/documents/[id]/status` (tiap 3 dtk, maks. 2 menit).
 
 ### `GET /api/documents/[id]/status`
 Akses: anggota kepanitiaan.
 ```ts
-Response { status, statusReason?: string, requestId }
+Response { status, statusReason?: string, version: number, requestId }
 ```
+Dokumen acara lain → 404. Bila `refining` lebih dari 3 menit, status diubah ke `refine_failed` (`statusReason: "timeout"`).
 
 ### `POST /api/documents/[id]/refine`
-Akses: admin. Mengulang perapihan untuk status `refine_failed`. Rate limit `refine`.
+Akses: admin. Mengulang perapihan untuk status `refine_failed` (status lain → 400). Rate limit `refine` per kepanitiaan. Respons 202 `{ status: "refining", requestId }`.
 
 ### Server actions (admin)
 | Action | Input | Catatan |
 |---|---|---|
 | `approveDocument` | `{ documentId, expectedVersion, editedContent?: string(..200000) }` | Jika ada edit: `redact()` lagi, simpan versi `admin_edited` (JWT admin, `created_by = auth.uid()`), lalu RPC `approve_document(p_doc, p_version_id, p_expected_version, p_request_id)`. Audit ditulis di dalam RPC (satu transaksi). |
 | `rejectDocument` | `{ documentId, expectedVersion, reasonCategory }` | RPC `reject_document(p_doc, p_reason_category, p_expected_version, p_request_id)`. `reasonCategory` berupa slug `^[a-z][a-z_]{0,39}$`, bukan teks bebas. Audit di dalam RPC. |
+| `editApprovedDocument` | `{ documentId, expectedVersion, content: string(1..200000) }` | Hanya `approved`. `redact()`, versi `admin_edited`, lalu RPC `reopen_document(p_doc, p_version_id, p_expected_version, p_request_id)`: kembali ke `needs_review` dan `internal`. Audit `document.edit_after_approve` di dalam RPC. |
 | `setVisibility` | `{ documentId, visibility, expectedVersion }` | Tolak `public` bila `pii_summary` versi terkini tidak kosong, lalu RPC `set_document_visibility(p_doc, p_visibility, p_expected_version, p_request_id)`. Audit di dalam RPC. |
 | `deleteDocument` | `{ documentId }` | Hapus file storage + baris; audit |
 | `createCommittee` | `{ name, slug, eventDate?, location?, contactPublic }` | Super admin |
-| `archiveCommittee` | `{ committeeId }` | Super admin |
+| `updateCommittee` | `{ committeeId, name, eventDate?, location?, contactPublic }` | Admin kepanitiaan / super admin; `slug` tidak bisa diubah |
+| `archiveCommittee` | `{ committeeId }` | Super admin; RPC `archive_committee(p_committee, p_request_id)`, audit di dalam RPC |
 | `inviteMember` | `{ committeeId, email, role }` | Admin; email tidak dicatat mentah |
-| `changeMemberRole` / `removeMember` | `{ committeeId, userId, role? }` | Admin; tidak boleh menghapus admin terakhir |
+| `changeMemberRole` / `removeMember` | `{ committeeId, userId, role? }` | Admin; tidak boleh menurunkan/menghapus admin terakhir (409, juga dijaga trigger) |
+| `requestMagicLink` | `{ email, next? }` | Publik. Rate limit `login` per IP-hash dan email-hash; balasan sama untuk email terdaftar maupun tidak |
 
-Ketiga RPC dokumen selalu menerima `requestId` dari request yang sedang berjalan (format `req_` + ULID; selain itu ditolak `invalid_request_id`) dan mengembalikan `version` baru. Pemetaan error RPC → HTTP: `40001 conflict` → 409 `CONFLICT`; `42501 forbidden` → 403 `FORBIDDEN`; `P0002 not_found` → 404; `22023` (`not_approved`, `invalid_transition`, `invalid_version`, `invalid_reason`) → 400 `INVALID_INPUT`. Kolom status dokumen tidak bisa diubah dengan `UPDATE` langsung (lihat DATABASE §2b).
+`rejectDocument.reasonCategory` ∈ `tidak_akurat | tidak_relevan | data_pribadi | duplikat | lainnya`. Aksi berbasis dokumen pada dokumen acara lain → 404 `NOT_FOUND`.
+
+### `GET /auth/callback` · `POST /auth/logout`
+Callback menerima `code` (PKCE dari `signInWithOtp`) atau `token_hash` + `type` (`magiclink`/`invite`/`email`), lalu redirect 303 ke `next` yang sudah disaring `safeNextPath` (default `/panitia`); gagal → `/login?error=link`. Logout hanya `POST`, cek Origin, `signOut()` di server, redirect 303 ke `/login`.
+
+Keempat RPC dokumen (`approve_document`, `reject_document`, `set_document_visibility`, `reopen_document`) selalu menerima `requestId` dari request yang sedang berjalan (format `req_` + ULID; selain itu ditolak `invalid_request_id`) dan mengembalikan `version` baru. Pemetaan error RPC → HTTP: `40001 conflict` → 409 `CONFLICT`; `42501 forbidden` → 403 `FORBIDDEN`; `P0002 not_found` → 404; `22023` (`not_approved`, `pii_present`, `invalid_transition`, `invalid_version`, `invalid_reason`) → 400 `INVALID_INPUT`; `23514 last_admin` → 409 `CONFLICT`. Kolom status dokumen tidak bisa diubah dengan `UPDATE` langsung (lihat DATABASE §2b).
 
 ### `GET /api/qr/[slug]`
-Akses: admin kepanitiaan. Mengembalikan PNG/SVG QR ke `APP_URL/e/[slug]`. Parameter `?format=png|svg&size=512|1024`.
+Akses: admin kepanitiaan (atau super admin). Mengembalikan PNG/SVG QR ke `APP_URL/e/[slug]` sebagai unduhan (`Cache-Control: private, no-store`). Parameter `?format=png|svg&size=512|1024`; nilai lain → 400.
 
 ### `GET /api/cron/retention`
 Header `Authorization: Bearer ${CRON_SECRET}`. Memanggil `purge_expired_logs`.
