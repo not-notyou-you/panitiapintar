@@ -57,7 +57,8 @@ export function parseRefineOutput(raw: string): ParseResult<RefineOutput> {
     return { ok: false, paths: ["(json)"] };
   }
   const parsed = refineOutputSchema.safeParse(json);
-  if (!parsed.success) return { ok: false, paths: parsed.error.issues.map((i) => i.path.join(".") || "(root)") };
+  if (!parsed.success)
+    return { ok: false, paths: parsed.error.issues.map((i) => i.path.join(".") || "(root)") };
   return { ok: true, value: parsed.data };
 }
 

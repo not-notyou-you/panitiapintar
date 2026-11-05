@@ -47,6 +47,9 @@ Akses: anggota kepanitiaan. Rate limit: `chat_internal`.
 Request  { committeeId: uuid, message: string(1..2000), history?: (max 10) }
 Response { answer, answered, sources[], containsInternal: boolean, requestId }
 ```
+- Hanya anggota sungguhan (super admin yang bukan anggota → 403). Konteks: dokumen `approved` (publik + internal) dibaca dengan JWT pengguna; RLS membatasi ke kepanitiaannya. Tanpa dokumen approved → `answered=false` tanpa memanggil Gemini.
+- `containsInternal=true` bila ada sumber yang dikutip berstatus internal (atau, bila tidak ada sumber yang dikutip, bila konteks memuat dokumen internal). UI menampilkan label "INTERNAL · jangan dibagikan ke publik".
+- Kode: `lib/api/panitia.ts`, prompt `lib/ai/prompts/chat-internal.ts`.
 
 ### `POST /api/generate/[kind]`
 `kind ∈ { rundown, checklist }`. Akses: anggota kepanitiaan.
@@ -58,7 +61,7 @@ Response { rows: { time: "HH:mm", durationMin: number, activity: string, pic: st
 Request  { committeeId, eventDate, divisions?: string[] (max 10), notes?: string(..500) }
 Response { items: { due: "H-30"|"H-14"|"H-7"|"H-3"|"H-1"|"H", division: string, task: string }[], requestId }
 ```
-Keluaran Gemini wajib JSON sesuai schema; divalidasi zod; gagal → 502 `AI_UNAVAILABLE` + `ai.output.invalid`.
+Keluaran Gemini wajib JSON sesuai schema; divalidasi zod; gagal → 502 `AI_UNAVAILABLE` + `ai.output.invalid`. Akses dan rate limit sama dengan chat internal (bucket `chat_internal`). `rows` diurutkan menurut `time`, `items` menurut `due` H-30 → H. Hasil tidak disimpan (hanya permintaan teredaksi di `chat_logs` mode `rundown`/`checklist`); `kind` lain → 404. Prompt: `lib/ai/prompts/generate.ts`.
 
 ### `POST /api/documents/upload`
 Akses: admin kepanitiaan. `multipart/form-data`: `committeeId`, `title` (1..150), `file`.

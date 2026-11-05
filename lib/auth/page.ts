@@ -34,3 +34,6 @@ export const pageUser = (route: string) => guard(route, (g) => requireUser(g));
 export const pageSuperAdmin = (route: string) => guard(route, (g) => requireRole("super_admin", g));
 export const pageMembership = (route: string, committeeId: string, role?: "admin") =>
   guard(route, (g) => requireMembership(committeeId, role, g));
+/** Mode Panitia: real members only, super admins included only when they are members themselves. */
+export const pageWorkspace = (route: string, committeeId: string) =>
+  guard(route, (g) => requireMembership(committeeId, undefined, g, { realMemberOnly: true }));

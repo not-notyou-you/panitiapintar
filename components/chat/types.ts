@@ -11,5 +11,7 @@ export type ChatMessage =
       kind: "answer" | "unanswered" | "error";
       text: string;
       sources?: ChatSource[];
+      /** Mode Panitia: the answer drew on internal documents (INTERFACE §4.2 label). */
+      containsInternal?: boolean;
       requestId?: string;
     };

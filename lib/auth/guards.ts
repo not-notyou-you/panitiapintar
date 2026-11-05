@@ -60,19 +60,21 @@ export async function requireRole(role: "super_admin", deps: GuardDeps): Promise
 
 /**
  * The committee id comes from the URL or body and is never trusted: membership is re-read here.
- * Super admins pass every membership check. Unknown/invalid ids are denied like foreign ones.
+ * Super admins pass every membership check unless `realMemberOnly` is set (Mode Panitia: internal
+ * documents are for actual committee members only). Unknown/invalid ids are denied like foreign ones.
  */
 export async function requireMembership(
   committeeId: string,
   role: "admin" | "member" | undefined,
   deps: GuardDeps,
+  opts: { realMemberOnly?: boolean } = {},
 ): Promise<MembershipContext> {
   const user = await requireUser(deps);
   const required: RequiredRole = role ?? "member";
   if (!uuid.safeParse(committeeId).success) {
     await deny(deps, { userId: user.userId, required, committeeId: null });
   }
-  if (user.isSuperAdmin) return { ...user, committeeId, actorRole: "super_admin" };
+  if (user.isSuperAdmin && !opts.realMemberOnly) return { ...user, committeeId, actorRole: "super_admin" };
 
   const { data } = await deps.client
     .from("memberships")
@@ -84,7 +86,7 @@ export async function requireMembership(
   if (!has || (required === "admin" && has !== "admin")) {
     await deny(deps, { userId: user.userId, required, committeeId });
   }
-  return { ...user, committeeId, actorRole: has as ActorRole };
+  return { ...user, committeeId, actorRole: user.isSuperAdmin ? "super_admin" : (has as ActorRole) };
 }
 
 async function deny(

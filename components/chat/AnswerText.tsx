@@ -18,7 +18,13 @@ export function safeUrl(url: string): string {
 
 export function AnswerText({ text }: { text: string }) {
   return (
-    <Markdown allowedElements={ALLOWED} unwrapDisallowed skipHtml urlTransform={safeUrl} components={components}>
+    <Markdown
+      allowedElements={ALLOWED}
+      unwrapDisallowed
+      skipHtml
+      urlTransform={safeUrl}
+      components={components}
+    >
       {text}
     </Markdown>
   );

@@ -117,7 +117,7 @@ Format nama: `domain.action.result`.
 | `chat.public.received` | debug | `committeeId`, `messageLength`, `historyTurns` |
 | `chat.public.answered` | info | `answered`, `sourceCount`, `piiRedacted[]`, `durationMs` |
 | `chat.public.unavailable` | info | `reason` (`committee_archived`/`no_public_docs`) |
-| `chat.internal.answered` | info | `userId`, `containsInternal`, `sourceCount` |
+| `chat.internal.answered` | info | `userId`, `answered`, `containsInternal`, `sourceCount` |
 | `generate.rundown.completed` | info | `userId`, `rows` |
 | `generate.checklist.completed` | info | `userId`, `items` |
 | `chat.pii.redacted` | info | `types[]`, `count`, `stage` (`input`/`history`/`output`) |

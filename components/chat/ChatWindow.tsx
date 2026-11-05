@@ -8,15 +8,19 @@ import { PrivacyBanner } from "./PrivacyBanner";
 import { TypingIndicator } from "./TypingIndicator";
 import type { ChatMessage, ChatSource } from "./types";
 
-const SUGGESTIONS = ["Jam berapa acara mulai?", "Di mana lokasinya?", "Apa dress code-nya?"];
-const MAX_LEN = 1000;
-const MAX_HISTORY = 6;
+const PUBLIC_SUGGESTIONS = ["Jam berapa acara mulai?", "Di mana lokasinya?", "Apa dress code-nya?"];
+const INTERNAL_SUGGESTIONS = [
+  "Apa keputusan rapat terakhir?",
+  "Berapa anggaran tiap divisi?",
+  "Siapa PIC tiap divisi?",
+];
 const CLIENT_TIMEOUT_MS = 45_000;
 
 interface ApiOk {
   answer: string;
   answered: boolean;
   sources: ChatSource[];
+  containsInternal?: boolean;
   requestId: string;
 }
 interface ApiErr {
@@ -33,7 +37,12 @@ function stripPii(text: string): string {
   return out.replace(/[ \t]{2,}/g, " ").trim();
 }
 
-export function ChatWindow({ slug }: { slug: string }) {
+/** Public mode passes `slug`; Mode Panitia passes `committeeId` (POST /api/chat/internal, API.md §2). */
+export function ChatWindow(props: { slug: string } | { committeeId: string }) {
+  const internal = "committeeId" in props;
+  const MAX_LEN = internal ? 2000 : 1000;
+  const MAX_HISTORY = internal ? 10 : 6;
+  const SUGGESTIONS = internal ? INTERNAL_SUGGESTIONS : PUBLIC_SUGGESTIONS;
   // History lives only in this component's state: never stored in the browser or sent anywhere else.
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [draft, setDraft] = useState("");
@@ -50,7 +59,10 @@ export function ChatWindow({ slug }: { slug: string }) {
     return messages
       .filter((m) => m.role === "user" || m.kind === "answer")
       .slice(-MAX_HISTORY)
-      .map((m) => ({ role: m.role === "user" ? ("user" as const) : ("model" as const), text: m.text.slice(0, MAX_LEN) }));
+      .map((m) => ({
+        role: m.role === "user" ? ("user" as const) : ("model" as const),
+        text: m.text.slice(0, MAX_LEN),
+      }));
   }
 
   async function send(text: string) {
@@ -66,10 +78,16 @@ export function ChatWindow({ slug }: { slug: string }) {
     const timer = setTimeout(() => controller.abort(), CLIENT_TIMEOUT_MS);
     let reply: ChatMessage;
     try {
-      const res = await fetch("/api/chat/public", {
+      const target = internal
+        ? {
+            url: "/api/chat/internal",
+            body: { committeeId: props.committeeId, message, history: priorHistory },
+          }
+        : { url: "/api/chat/public", body: { slug: props.slug, message, history: priorHistory } };
+      const res = await fetch(target.url, {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ slug, message, history: priorHistory }),
+        body: JSON.stringify(target.body),
         signal: controller.signal,
       });
       const data = (await res.json().catch(() => null)) as ApiOk | ApiErr | null;
@@ -80,6 +98,7 @@ export function ChatWindow({ slug }: { slug: string }) {
           kind: data.answered ? "answer" : "unanswered",
           text: data.answer,
           sources: data.sources,
+          containsInternal: data.containsInternal === true,
           requestId: data.requestId,
         };
       } else {
@@ -121,7 +140,7 @@ export function ChatWindow({ slug }: { slug: string }) {
 
   return (
     <div className="flex flex-col gap-3">
-      <PrivacyBanner />
+      {internal ? null : <PrivacyBanner />}
 
       {messages.length === 0 ? (
         <div>
@@ -170,7 +189,7 @@ export function ChatWindow({ slug }: { slug: string }) {
           ref={inputRef}
           type="text"
           className="field"
-          placeholder="Tulis pertanyaan tentang acara ini…"
+          placeholder={internal ? "Tulis pertanyaan atau instruksi…" : "Tulis pertanyaan tentang acara ini…"}
           value={draft}
           maxLength={MAX_LEN}
           autoComplete="off"
@@ -179,7 +198,12 @@ export function ChatWindow({ slug }: { slug: string }) {
             if (pii) setPii(null);
           }}
         />
-        <button type="submit" className="btn min-w-[44px]" disabled={pending || draft.trim() === ""} aria-label="Kirim">
+        <button
+          type="submit"
+          className="btn min-w-[44px]"
+          disabled={pending || draft.trim() === ""}
+          aria-label="Kirim"
+        >
           <span aria-hidden="true">▶</span>
         </button>
       </form>

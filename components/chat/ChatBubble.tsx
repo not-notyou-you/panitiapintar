@@ -26,6 +26,9 @@ export function ChatBubble({ message }: { message: ChatMessage }) {
   return (
     <div className="msg msg-bot">
       <span className="sr-only">Chatbot: </span>
+      {message.containsInternal ? (
+        <span className="badge badge-internal mb-2 inline-block">INTERNAL · jangan dibagikan ke publik</span>
+      ) : null}
       <AnswerText text={message.text} />
       {message.sources && message.sources.length > 0 ? (
         <span className="src">

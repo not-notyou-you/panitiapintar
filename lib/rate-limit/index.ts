@@ -9,6 +9,7 @@ export const RATE_LIMITS = {
     { name: "day", windowSeconds: 86_400, max: 100 },
   ],
   chat_public_event: [{ name: "hour", windowSeconds: 3_600, max: 600 }],
+  // Shared by /api/chat/internal and /api/generate/[kind] (SEC-07).
   chat_internal: [
     { name: "min", windowSeconds: 60, max: 20 },
     { name: "day", windowSeconds: 86_400, max: 300 },

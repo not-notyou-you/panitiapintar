@@ -60,6 +60,25 @@ export function assembleChatPublicPrompt(input: {
   question: string;
   history?: HistoryTurn[];
 }): AssembledPrompt {
+  return assembleDataPrompt({
+    system: chatPublicSystem(input.committee),
+    docs: input.docs,
+    history: input.history,
+    tail: { tag: "user_question", text: input.question },
+  });
+}
+
+/**
+ * Shared assembly for every chat/generator prompt. All data is redacted here and wrapped in
+ * delimiters with escapeData(), so no caller can forget either step (rules 2 and 9).
+ * `tail` is the user's request (question or generator form) and is redacted like everything else.
+ */
+export function assembleDataPrompt(input: {
+  system: string;
+  docs: ContextDoc[];
+  history?: HistoryTurn[];
+  tail: { tag: string; text: string };
+}): AssembledPrompt {
   const pii = { input: {}, history: {}, documents: {} } as AssembledPrompt["pii"];
 
   const docParts: string[] = [];
@@ -84,18 +103,18 @@ export function assembleChatPublicPrompt(input: {
     return `<turn role="${turn.role === "model" ? "model" : "user"}">${escapeData(r.text)}</turn>`;
   });
 
-  const question = redact(input.question);
-  mergeCounts(pii.input, question.found);
+  const tail = redact(input.tail.text);
+  mergeCounts(pii.input, tail.found);
 
   const sections = [`<documents>\n${docParts.join("\n")}\n</documents>`];
   if (historyParts.length > 0) sections.push(`<history>\n${historyParts.join("\n")}\n</history>`);
-  sections.push(`<user_question>${escapeData(question.text)}</user_question>`);
+  sections.push(`<${input.tail.tag}>${escapeData(tail.text)}</${input.tail.tag}>`);
 
   return {
-    system: chatPublicSystem(input.committee),
+    system: redact(input.system).text,
     prompt: sections.join("\n\n"),
     contextDocIds,
-    questionRedacted: question.text,
+    questionRedacted: tail.text,
     pii,
   };
 }
@@ -105,7 +124,8 @@ const outputSchema = z.object({
   source_doc_ids: z.array(z.string().max(64)).max(20).default([]),
 });
 
-export type ChatPublicOutput = { kind: "not_found" } | { kind: "answer"; answer: string; sourceDocIds: string[] };
+export type ChatPublicOutput =
+  { kind: "not_found" } | { kind: "answer"; answer: string; sourceDocIds: string[] };
 
 /** Accepts the JSON contract, plus a bare NOT_FOUND (rule 1 says "balas persis"). */
 export function parseChatPublicOutput(raw: string): ParseResult<ChatPublicOutput> {
@@ -122,9 +142,13 @@ export function parseChatPublicOutput(raw: string): ParseResult<ChatPublicOutput
     return { ok: false, paths: ["(json)"] };
   }
   const parsed = outputSchema.safeParse(json);
-  if (!parsed.success) return { ok: false, paths: parsed.error.issues.map((i) => i.path.join(".") || "(root)") };
+  if (!parsed.success)
+    return { ok: false, paths: parsed.error.issues.map((i) => i.path.join(".") || "(root)") };
   if (parsed.data.answer.trim() === NOT_FOUND) return { ok: true, value: { kind: "not_found" } };
-  return { ok: true, value: { kind: "answer", answer: parsed.data.answer, sourceDocIds: parsed.data.source_doc_ids } };
+  return {
+    ok: true,
+    value: { kind: "answer", answer: parsed.data.answer, sourceDocIds: parsed.data.source_doc_ids },
+  };
 }
 
 export function notFoundMessage(contact: string): string {

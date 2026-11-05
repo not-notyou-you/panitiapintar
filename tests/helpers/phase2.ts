@@ -1,6 +1,11 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { ActionCtx } from "@/lib/actions/runtime";
+import { createAiClient } from "@/lib/ai/client";
+import { mockTransport } from "@/lib/ai/mock-transport";
+import type { AiTransport } from "@/lib/ai/types";
 import type { UploadDeps } from "@/lib/api/documents";
+import type { PanitiaDeps } from "@/lib/api/panitia";
+import { saveChatLog } from "@/lib/chat/chat-log";
 import { audit } from "@/lib/log/audit";
 import { captureLogger } from "./capture-logger";
 import { addMember, anon, createCommittee, createUser, requestId, service, type TestUser } from "./db";
@@ -52,7 +57,10 @@ export function ctxFor(client: SupabaseClient, opts: { origin?: string | null } 
 
 export const anonCtx = (opts?: { origin?: string | null }) => ctxFor(anon(), opts);
 
-export function uploadDeps(client: SupabaseClient, scheduled: string[] = []): UploadDeps & { lines: string[] } {
+export function uploadDeps(
+  client: SupabaseClient,
+  scheduled: string[] = [],
+): UploadDeps & { lines: string[] } {
   const { ctx, lines } = ctxFor(client);
   return {
     client,
@@ -75,7 +83,10 @@ export function uploadRequest(
   form.set("committeeId", fields.committeeId);
   if (fields.title !== undefined) form.set("title", fields.title);
   if (fields.file) {
-    form.set("file", new File([new Uint8Array(fields.file.bytes)], fields.file.name, { type: fields.file.type }));
+    form.set(
+      "file",
+      new File([new Uint8Array(fields.file.bytes)], fields.file.name, { type: fields.file.type }),
+    );
   }
   const headers: Record<string, string> = {};
   const origin = opts.origin === undefined ? ORIGIN : opts.origin;
@@ -84,3 +95,41 @@ export function uploadRequest(
 }
 
 export { DOCX_MIME, PNG_BYTES, makeDocx, makePdf } from "./files";
+
+/** Mode Panitia deps: real JWT client + RLS, deterministic mock AI, real chat_logs/ai_calls writes. */
+export function panitiaDeps(
+  client: SupabaseClient,
+  opts: { transport?: AiTransport; origin?: string } = {},
+): PanitiaDeps & { lines: string[]; prompts: { system: string; prompt: string }[] } {
+  const { ctx, lines } = ctxFor(client);
+  const prompts: { system: string; prompt: string }[] = [];
+  const inner = opts.transport ?? mockTransport();
+  const ai = createAiClient({
+    transport: {
+      generate: (req) => {
+        prompts.push({ system: req.system, prompt: req.prompt });
+        return inner.generate(req);
+      },
+    },
+    models: { chat: "mock-chat", refine: "mock-refine" },
+    sleep: async () => {},
+  });
+  return {
+    client,
+    log: ctx.log,
+    requestId: ctx.requestId,
+    appUrl: APP_URL,
+    audit: ctx.audit,
+    rateLimit: async () => ({ ok: true }),
+    generate: (input) => ai.generate(input),
+    saveChatLog,
+    lines,
+    prompts,
+  };
+}
+
+export function jsonRequest(body: unknown, origin: string | null = ORIGIN): Request {
+  const headers: Record<string, string> = { "content-type": "application/json" };
+  if (origin) headers.origin = origin;
+  return new Request("http://localhost/api", { method: "POST", headers, body: JSON.stringify(body) });
+}

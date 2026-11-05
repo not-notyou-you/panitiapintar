@@ -47,12 +47,17 @@ export default async function PanitiaHome() {
                 <tr key={r.committees!.id}>
                   <td>
                     {r.committees!.name}
-                    {r.committees!.status !== "active" ? <span className="text-mut"> (diarsipkan)</span> : null}
+                    {r.committees!.status !== "active" ? (
+                      <span className="text-mut"> (diarsipkan)</span>
+                    ) : null}
                   </td>
                   <td>{r.role === "admin" ? "Admin" : "Anggota"}</td>
                   <td>{formatDate(r.committees!.event_date) ?? "-"}</td>
                   <td className="text-right">
-                    {r.role === "admin" ? <Link href={`/admin/${r.committees!.id}`}>Kelola</Link> : null}
+                    <span className="inline-flex gap-3">
+                      <Link href={`/panitia/${r.committees!.id}`}>Buka</Link>
+                      {r.role === "admin" ? <Link href={`/admin/${r.committees!.id}`}>Kelola</Link> : null}
+                    </span>
                   </td>
                 </tr>
               ))}

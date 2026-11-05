@@ -15,6 +15,7 @@ import {
 import { changeMemberRole, inviteMember, removeMember } from "@/lib/actions/members";
 import type { ActionResult } from "@/lib/actions/runtime";
 import { handleRefineRetry, handleStatus, handleUpload } from "@/lib/api/documents";
+import { handleGenerate, handleInternalChat } from "@/lib/api/panitia";
 import { handleQr } from "@/lib/api/qr";
 import {
   addMember,
@@ -26,7 +27,16 @@ import {
   must,
   service,
 } from "../helpers/db";
-import { ORIGIN, ctxFor, setupActors, uploadDeps, uploadRequest, type Actors } from "../helpers/phase2";
+import {
+  ORIGIN,
+  ctxFor,
+  jsonRequest,
+  panitiaDeps,
+  setupActors,
+  uploadDeps,
+  uploadRequest,
+  type Actors,
+} from "../helpers/phase2";
 
 type ActorKey = "anon" | "member" | "otherAdmin" | "admin" | "superAdmin";
 const ACTORS: ActorKey[] = ["anon", "member", "otherAdmin", "admin", "superAdmin"];
@@ -48,6 +58,8 @@ const SUPER_ONLY: Record<ActorKey, Outcome> = {
   superAdmin: "ok",
 };
 const MEMBER_DOC: Record<ActorKey, Outcome> = { ...ADMIN_DOC, member: "ok" };
+// Mode Panitia: real members only; a super admin who is not a member is refused (internal documents).
+const WORKSPACE: Record<ActorKey, Outcome> = { ...ADMIN_ONLY, member: "ok", superAdmin: "FORBIDDEN" };
 
 const HTTP: Record<Outcome, number[]> = {
   ok: [200, 201, 202],
@@ -84,7 +96,11 @@ describe.skipIf(!dbAvailable)("authz matrix", () => {
     createDocument({ committeeId: a.A.id, title: `az ${status}`, visibility: "internal", status });
 
   // Each case prepares fresh fixtures per actor so one actor's success never changes another's result.
-  const actionCases: [string, Record<ActorKey, Outcome>, (c: SupabaseClient) => Promise<ActionResult<unknown>>][] = [
+  const actionCases: [
+    string,
+    Record<ActorKey, Outcome>,
+    (c: SupabaseClient) => Promise<ActionResult<unknown>>,
+  ][] = [
     [
       "createCommittee",
       SUPER_ONLY,
@@ -124,7 +140,10 @@ describe.skipIf(!dbAvailable)("authz matrix", () => {
       ADMIN_DOC,
       async (c) => {
         const d = await doc("needs_review");
-        return rejectDocument({ documentId: d.id, expectedVersion: d.version, reasonCategory: "lainnya" }, ctxFor(c).ctx);
+        return rejectDocument(
+          { documentId: d.id, expectedVersion: d.version, reasonCategory: "lainnya" },
+          ctxFor(c).ctx,
+        );
       },
     ],
     [
@@ -132,7 +151,10 @@ describe.skipIf(!dbAvailable)("authz matrix", () => {
       ADMIN_DOC,
       async (c) => {
         const d = await doc("approved");
-        return editApprovedDocument({ documentId: d.id, expectedVersion: d.version, content: "## Edit" }, ctxFor(c).ctx);
+        return editApprovedDocument(
+          { documentId: d.id, expectedVersion: d.version, content: "## Edit" },
+          ctxFor(c).ctx,
+        );
       },
     ],
     [
@@ -140,7 +162,10 @@ describe.skipIf(!dbAvailable)("authz matrix", () => {
       ADMIN_DOC,
       async (c) => {
         const d = await doc("approved");
-        return setVisibility({ documentId: d.id, expectedVersion: d.version, visibility: "public" }, ctxFor(c).ctx);
+        return setVisibility(
+          { documentId: d.id, expectedVersion: d.version, visibility: "public" },
+          ctxFor(c).ctx,
+        );
       },
     ],
     [
@@ -156,10 +181,14 @@ describe.skipIf(!dbAvailable)("authz matrix", () => {
       ADMIN_ONLY,
       async (c) => {
         const u = await createUser("az-inv");
-        return inviteMember({ committeeId: a.A.id, email: u.email, role: "member" }, ctxFor(c).ctx, async () => ({
-          userId: u.id,
-          invited: false,
-        }));
+        return inviteMember(
+          { committeeId: a.A.id, email: u.email, role: "member" },
+          ctxFor(c).ctx,
+          async () => ({
+            userId: u.id,
+            invited: false,
+          }),
+        );
       },
     ],
     [
@@ -194,12 +223,22 @@ describe.skipIf(!dbAvailable)("authz matrix", () => {
       ADMIN_ONLY,
       async (c) => {
         // Other cases pile documents onto A; archive them so the 10-document quota does not interfere.
-        must(await service().from("documents").update({ status: "archived" }).eq("committee_id", a.A.id).select("id"));
+        must(
+          await service()
+            .from("documents")
+            .update({ status: "archived" })
+            .eq("committee_id", a.A.id)
+            .select("id"),
+        );
         return handleUpload(
           uploadRequest({
             committeeId: a.A.id,
             title: "az",
-            file: { name: "az.txt", type: "text/plain", bytes: new TextEncoder().encode(`az ${randomUUID()}`) },
+            file: {
+              name: "az.txt",
+              type: "text/plain",
+              bytes: new TextEncoder().encode(`az ${randomUUID()}`),
+            },
           }),
           uploadDeps(c),
         );
@@ -218,13 +257,52 @@ describe.skipIf(!dbAvailable)("authz matrix", () => {
       ADMIN_DOC,
       async (c) => {
         const d = await doc("refine_failed");
-        return handleRefineRetry(new Request("http://x", { method: "POST", headers: { origin: ORIGIN } }), d.id, uploadDeps(c));
+        return handleRefineRetry(
+          new Request("http://x", { method: "POST", headers: { origin: ORIGIN } }),
+          d.id,
+          uploadDeps(c),
+        );
       },
     ],
     [
       "GET /api/qr/[slug]",
       ADMIN_ONLY,
       (c) => handleQr(a.A.slug, new URLSearchParams("format=svg"), uploadDeps(c)),
+    ],
+    [
+      "POST /api/chat/internal",
+      WORKSPACE,
+      (c) =>
+        handleInternalChat(
+          jsonRequest({ committeeId: a.A.id, message: "Jam berapa mulai?" }),
+          panitiaDeps(c),
+        ),
+    ],
+    [
+      "POST /api/generate/rundown",
+      WORKSPACE,
+      (c) =>
+        handleGenerate(
+          "rundown",
+          jsonRequest({
+            committeeId: a.A.id,
+            eventDate: "2026-11-14",
+            start: "09:00",
+            end: "12:00",
+            activities: "Seminar, lomba",
+          }),
+          panitiaDeps(c),
+        ),
+    ],
+    [
+      "POST /api/generate/checklist",
+      WORKSPACE,
+      (c) =>
+        handleGenerate(
+          "checklist",
+          jsonRequest({ committeeId: a.A.id, eventDate: "2026-11-14" }),
+          panitiaDeps(c),
+        ),
     ],
   ];
 
@@ -252,7 +330,10 @@ describe.skipIf(!dbAvailable)("authz matrix", () => {
     const d = await doc("approved");
     const { ctx } = ctxFor(a.member.client);
     await setVisibility({ documentId: d.id, expectedVersion: d.version, visibility: "public" }, ctx);
-    const { data } = await service().from("audit_logs").select("action, outcome, actor_id").eq("request_id", ctx.requestId);
+    const { data } = await service()
+      .from("audit_logs")
+      .select("action, outcome, actor_id")
+      .eq("request_id", ctx.requestId);
     expect(data).toEqual([{ action: "auth.access_denied", outcome: "denied", actor_id: a.member.id }]);
   });
 });
