@@ -106,11 +106,14 @@ Keempat RPC dokumen (`approve_document`, `reject_document`, `set_document_visibi
 ### `GET /api/qr/[slug]`
 Akses: admin kepanitiaan (atau super admin). Mengembalikan PNG/SVG QR ke `APP_URL/e/[slug]` sebagai unduhan (`Cache-Control: private, no-store`). Parameter `?format=png|svg&size=512|1024`; nilai lain → 400.
 
+### `GET /api/admin/logs/export`
+Akses: super admin. Parameter sama dengan halaman `/admin/logs` (`tab=audit|ai|keamanan`, `range=1|7|30`, `committee?`, `action?`, `outcome?`; nilai tidak valid → nilai bawaan). Respons `text/csv` (UTF-8 BOM, `Cache-Control: private, no-store`), maks. 500 baris audit / 5.000 baris AI. Sel yang diawali `= + - @` diberi prefiks `'` (formula injection). Aktor berupa nama tampilan, bukan email. Kode: `lib/api/admin-logs.ts`, `lib/admin/logs.ts`.
+
 ### `GET /api/cron/retention`
-Header `Authorization: Bearer ${CRON_SECRET}`. Memanggil `purge_expired_logs`.
+Header `Authorization: Bearer ${CRON_SECRET}` (dibandingkan dengan `timingSafeEqual`); salah/tidak ada → 401. Memanggil `purge_expired_logs(30, 90, 180)` dengan service role, mencatat `retention.purge.completed` dan audit `system.retention_purge`. Respons `{ purged: { chat_logs, ai_calls, audit_logs, rate_limits }, requestId }`. Jadwal di `vercel.json`: `0 19 * * *` UTC = 02.00 WIB.
 
 ### `GET /api/health`
-Publik. `{ status: "ok"|"degraded", db: "up"|"down", ai: "configured"|"missing", version }`. Tidak memanggil Gemini (hemat kuota).
+Publik. `{ status: "ok"|"degraded", db: "up"|"down", ai: "configured"|"missing", version }`; `degraded` → HTTP 503 + `health.check.degraded`. Ping DB memakai anon key (timeout 3 dtk). `ai` hanya memeriksa kunci/`AI_MOCK` ada; tidak memanggil Gemini (hemat kuota). `version` = 7 karakter `VERCEL_GIT_COMMIT_SHA`.
 
 ## 3. Kontrak prompt
 

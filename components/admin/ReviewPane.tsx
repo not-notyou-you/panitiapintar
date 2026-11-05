@@ -56,13 +56,21 @@ export function ReviewPane(props: {
     });
   const reject = () =>
     start(async () => {
-      const r = await rejectDocumentAction({ documentId: doc.id, expectedVersion: doc.version, reasonCategory: reason });
+      const r = await rejectDocumentAction({
+        documentId: doc.id,
+        expectedVersion: doc.version,
+        reasonCategory: reason,
+      });
       if (r.ok) back();
       else fail(r.error);
     });
   const saveApprovedEdit = () =>
     start(async () => {
-      const r = await editApprovedDocumentAction({ documentId: doc.id, expectedVersion: doc.version, content: draft });
+      const r = await editApprovedDocumentAction({
+        documentId: doc.id,
+        expectedVersion: doc.version,
+        content: draft,
+      });
       if (r.ok) router.refresh();
       else fail(r.error);
     });
@@ -99,7 +107,10 @@ export function ReviewPane(props: {
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">
-        <section className={`${mobileTab === "asli" ? "" : "hidden"} md:block`} aria-labelledby="pane-original">
+        <section
+          className={`${mobileTab === "asli" ? "" : "hidden"} md:block`}
+          aria-labelledby="pane-original"
+        >
           <h2 id="pane-original" className="m-0 mb-2 text-sm uppercase">
             Teks asli (sudah diredaksi)
           </h2>
@@ -122,9 +133,7 @@ export function ReviewPane(props: {
           </div>
           {doc.status === "refine_failed" ? (
             <div className="flex flex-col items-start gap-2">
-              <p className="pii m-0">
-                Perapihan gagal. {STATUS_REASON_LABELS[doc.statusReason ?? ""] ?? ""}
-              </p>
+              <p className="pii m-0">Perapihan gagal. {STATUS_REASON_LABELS[doc.statusReason ?? ""] ?? ""}</p>
               <Button onClick={retry} disabled={pending}>
                 Coba rapikan lagi
               </Button>

@@ -28,8 +28,15 @@ export function MembersPanel({
   const [pending, start] = useTransition();
   const admins = members.filter((m) => m.role === "admin").length;
 
-  const report = (r: { ok: true } | { ok: false; error: { message: string; requestId: string } }, okText: string) => {
-    setMsg(r.ok ? { ok: true, text: okText } : { ok: false, text: `${r.error.message} (kode ${r.error.requestId})` });
+  const report = (
+    r: { ok: true } | { ok: false; error: { message: string; requestId: string } },
+    okText: string,
+  ) => {
+    setMsg(
+      r.ok
+        ? { ok: true, text: okText }
+        : { ok: false, text: `${r.error.message} (kode ${r.error.requestId})` },
+    );
     if (r.ok) router.refresh();
   };
 
@@ -60,7 +67,11 @@ export function MembersPanel({
         </label>
         <label className="label">
           Peran
-          <select className="field" value={role} onChange={(e) => setRole(e.target.value as "admin" | "member")}>
+          <select
+            className="field"
+            value={role}
+            onChange={(e) => setRole(e.target.value as "admin" | "member")}
+          >
             <option value="member">Anggota</option>
             <option value="admin">Admin</option>
           </select>
@@ -106,7 +117,11 @@ export function MembersPanel({
                       onChange={(e) =>
                         start(async () =>
                           report(
-                            await changeMemberRoleAction({ committeeId, userId: m.user_id, role: e.target.value }),
+                            await changeMemberRoleAction({
+                              committeeId,
+                              userId: m.user_id,
+                              role: e.target.value,
+                            }),
                             "Peran diubah.",
                           ),
                         )
@@ -124,7 +139,10 @@ export function MembersPanel({
                       onClick={() => {
                         if (!window.confirm(`Keluarkan ${m.email} dari kepanitiaan?`)) return;
                         start(async () =>
-                          report(await removeMemberAction({ committeeId, userId: m.user_id }), "Anggota dikeluarkan."),
+                          report(
+                            await removeMemberAction({ committeeId, userId: m.user_id }),
+                            "Anggota dikeluarkan.",
+                          ),
                         );
                       }}
                     >

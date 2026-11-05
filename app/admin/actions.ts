@@ -44,7 +44,9 @@ export async function deleteDocumentAction(input: unknown) {
 
 export async function inviteMemberAction(input: unknown) {
   const redirectTo = `${new URL(env().APP_URL).origin}/auth/callback?next=/panitia`;
-  return run((ctx) => members.inviteMember(input, ctx, members.serviceFindOrInvite(serviceClient(), redirectTo)));
+  return run((ctx) =>
+    members.inviteMember(input, ctx, members.serviceFindOrInvite(serviceClient(), redirectTo)),
+  );
 }
 export async function changeMemberRoleAction(input: unknown) {
   return run((ctx) => members.changeMemberRole(input, ctx));

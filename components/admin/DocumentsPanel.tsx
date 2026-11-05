@@ -82,7 +82,15 @@ export function DocumentsPanel({ committeeId, docs }: { committeeId: string; doc
   );
 }
 
-function DocRow({ committeeId, doc, onChanged }: { committeeId: string; doc: DocListItem; onChanged: () => void }) {
+function DocRow({
+  committeeId,
+  doc,
+  onChanged,
+}: {
+  committeeId: string;
+  doc: DocListItem;
+  onChanged: () => void;
+}) {
   const [pending, start] = useTransition();
   const [err, setErr] = useState<string | null>(null);
   const found = piiTotal(doc.pii_summary);
@@ -113,9 +121,7 @@ function DocRow({ committeeId, doc, onChanged }: { committeeId: string; doc: Doc
           </p>
         ) : null}
         {doc.status === "refine_failed" || doc.status === "rejected" ? (
-          <p className="text-mut m-0 text-[11px]">
-            {STATUS_REASON_LABELS[doc.status_reason ?? ""] ?? null}
-          </p>
+          <p className="text-mut m-0 text-[11px]">{STATUS_REASON_LABELS[doc.status_reason ?? ""] ?? null}</p>
         ) : null}
       </td>
       <td>
@@ -191,7 +197,15 @@ function usePolling(ids: string[], onChange: () => void) {
   }, [key]);
 }
 
-function UploadForm({ committeeId, disabled, onDone }: { committeeId: string; disabled: boolean; onDone: () => void }) {
+function UploadForm({
+  committeeId,
+  disabled,
+  onDone,
+}: {
+  committeeId: string;
+  disabled: boolean;
+  onDone: () => void;
+}) {
   const [title, setTitle] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);

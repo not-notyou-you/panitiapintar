@@ -25,46 +25,52 @@ function error(code: ErrorCode, status: number, requestId: string): NextResponse
 }
 
 // ARCHITECTURE.md §5.1. Step 1 (requestId, headers) happens in middleware/withRequestLog.
-export const POST = withRequestLog("POST /api/chat/public", async (req: NextRequest, log, _ctx, requestId) => {
-  // SEC-11: browsers always send Origin on POST; foreign or missing origins are rejected.
-  try {
-    assertSameOrigin(req.headers.get("origin"), env().APP_URL, log);
-  } catch {
-    return error("FORBIDDEN", 403, requestId);
-  }
-
-  // 2. Size limit, then zod.
-  const declared = Number(req.headers.get("content-length") ?? "0");
-  if (declared > MAX_BODY_BYTES) return error("PAYLOAD_TOO_LARGE", 413, requestId);
-  const raw = await req.text();
-  if (Buffer.byteLength(raw) > MAX_BODY_BYTES) return error("PAYLOAD_TOO_LARGE", 413, requestId);
-  let body: unknown;
-  try {
-    body = JSON.parse(raw);
-  } catch {
-    return error("INVALID_INPUT", 400, requestId);
-  }
-  const parsed = publicChatRequestSchema.safeParse(body);
-  if (!parsed.success) return error("INVALID_INPUT", 400, requestId);
-
-  try {
-    const result = await handlePublicChat(parsed.data, {
-      log,
-      requestId,
-      ipHash: ipHash(clientIp(req.headers)),
-      rateLimit: (bucket, key) => rateLimit(bucket, key, { log }),
-      findCommittee: findPublicCommittee,
-      loadContext: loadPublicContext,
-      generate: (input) => aiClient().generate(input),
-      saveChatLog,
-      audit: (entry) => audit(entry, { log }),
-    });
-    return json(result);
-  } catch (err) {
-    if (err instanceof PublicDataUnavailableError || err instanceof RateLimitUnavailableError) {
-      log.error({ event: "http.request.failed", status: 503, error: { code: err.name } }, "dependency down");
-      return error("SERVICE_UNAVAILABLE", 503, requestId);
+export const POST = withRequestLog(
+  "POST /api/chat/public",
+  async (req: NextRequest, log, _ctx, requestId) => {
+    // SEC-11: browsers always send Origin on POST; foreign or missing origins are rejected.
+    try {
+      assertSameOrigin(req.headers.get("origin"), env().APP_URL, log);
+    } catch {
+      return error("FORBIDDEN", 403, requestId);
     }
-    throw err;
-  }
-});
+
+    // 2. Size limit, then zod.
+    const declared = Number(req.headers.get("content-length") ?? "0");
+    if (declared > MAX_BODY_BYTES) return error("PAYLOAD_TOO_LARGE", 413, requestId);
+    const raw = await req.text();
+    if (Buffer.byteLength(raw) > MAX_BODY_BYTES) return error("PAYLOAD_TOO_LARGE", 413, requestId);
+    let body: unknown;
+    try {
+      body = JSON.parse(raw);
+    } catch {
+      return error("INVALID_INPUT", 400, requestId);
+    }
+    const parsed = publicChatRequestSchema.safeParse(body);
+    if (!parsed.success) return error("INVALID_INPUT", 400, requestId);
+
+    try {
+      const result = await handlePublicChat(parsed.data, {
+        log,
+        requestId,
+        ipHash: ipHash(clientIp(req.headers)),
+        rateLimit: (bucket, key) => rateLimit(bucket, key, { log }),
+        findCommittee: findPublicCommittee,
+        loadContext: loadPublicContext,
+        generate: (input) => aiClient().generate(input),
+        saveChatLog,
+        audit: (entry) => audit(entry, { log }),
+      });
+      return json(result);
+    } catch (err) {
+      if (err instanceof PublicDataUnavailableError || err instanceof RateLimitUnavailableError) {
+        log.error(
+          { event: "http.request.failed", status: 503, error: { code: err.name } },
+          "dependency down",
+        );
+        return error("SERVICE_UNAVAILABLE", 503, requestId);
+      }
+      throw err;
+    }
+  },
+);

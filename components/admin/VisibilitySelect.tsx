@@ -73,11 +73,13 @@ export function VisibilitySelect({ doc, onChanged }: { doc: Doc; onChanged: () =
           <p className="m-0">Dokumen ini akan bisa dibaca chatbot publik dan dijawab ke siapa saja.</p>
           {residual > 0 ? (
             <p className="pii m-0">
-              ■ {residual} pola data pribadi masih terlihat: {describePii(doc.currentPii).join(" · ")}. Edit dan
-              redaksi dulu sebelum dijadikan Publik.
+              ■ {residual} pola data pribadi masih terlihat: {describePii(doc.currentPii).join(" · ")}. Edit
+              dan redaksi dulu sebelum dijadikan Publik.
             </p>
           ) : censored.length > 0 ? (
-            <p className="notice m-0">Data pribadi di file asli sudah disensor otomatis: {censored.join(" · ")}.</p>
+            <p className="notice m-0">
+              Data pribadi di file asli sudah disensor otomatis: {censored.join(" · ")}.
+            </p>
           ) : (
             <p className="notice m-0">Tidak ditemukan pola data pribadi.</p>
           )}

@@ -53,7 +53,14 @@ export function CommitteeForm({ committeeId, initial }: { committeeId?: string; 
     >
       <label className="label">
         Nama acara
-        <input className="field" required minLength={3} maxLength={120} value={v.name} onChange={set("name")} />
+        <input
+          className="field"
+          required
+          minLength={3}
+          maxLength={120}
+          value={v.name}
+          onChange={set("name")}
+        />
       </label>
       <label className="label">
         {committeeId ? "Slug (alamat /e/…, tidak bisa diubah)" : "Slug (alamat /e/…)"}

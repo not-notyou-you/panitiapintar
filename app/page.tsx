@@ -16,7 +16,11 @@ export default async function HomePage() {
     committees = await listActiveCommittees();
   } catch (err) {
     logger.error(
-      { event: "http.request.failed", route: "/", error: { code: err instanceof Error ? err.name : "unknown" } },
+      {
+        event: "http.request.failed",
+        route: "/",
+        error: { code: err instanceof Error ? err.name : "unknown" },
+      },
       "home load failed",
     );
   }
@@ -29,7 +33,9 @@ export default async function HomePage() {
         {committees === null ? (
           <ErrorState message="Daftar acara tidak dapat dimuat. Coba lagi nanti." requestId={requestId} />
         ) : committees.length === 0 ? (
-          <EmptyState title="Belum ada acara aktif">Acara yang sedang berjalan akan tampil di sini.</EmptyState>
+          <EmptyState title="Belum ada acara aktif">
+            Acara yang sedang berjalan akan tampil di sini.
+          </EmptyState>
         ) : (
           <ul className="m-0 flex list-none flex-col gap-3 p-0">
             {committees.map((c) => (

@@ -6,6 +6,8 @@ import { withRequestLog } from "@/lib/log/with-request-log";
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
-export const POST = withRequestLog("POST /api/chat/internal", async (req: NextRequest, log, _ctx, requestId) =>
-  handleInternalChat(req, await panitiaDeps(log, requestId)),
+export const POST = withRequestLog(
+  "POST /api/chat/internal",
+  async (req: NextRequest, log, _ctx, requestId) =>
+    handleInternalChat(req, await panitiaDeps(log, requestId)),
 );

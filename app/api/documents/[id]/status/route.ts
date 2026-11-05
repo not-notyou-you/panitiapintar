@@ -8,6 +8,8 @@ export const dynamic = "force-dynamic";
 
 type Ctx = { params: Promise<{ id: string }> };
 
-export const GET = withRequestLog<Ctx>("GET /api/documents/[id]/status", async (_req: NextRequest, log, ctx, requestId) =>
-  handleStatus((await ctx.params).id, { ...(await routeDeps(log, requestId)), svc: serviceClient() }),
+export const GET = withRequestLog<Ctx>(
+  "GET /api/documents/[id]/status",
+  async (_req: NextRequest, log, ctx, requestId) =>
+    handleStatus((await ctx.params).id, { ...(await routeDeps(log, requestId)), svc: serviceClient() }),
 );

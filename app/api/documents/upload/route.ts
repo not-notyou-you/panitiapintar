@@ -8,6 +8,7 @@ export const runtime = "nodejs";
 // Extraction (≤30 s) runs inline; refine runs in after() and needs the rest of the budget.
 export const maxDuration = 60;
 
-export const POST = withRequestLog("POST /api/documents/upload", async (req: NextRequest, log, _ctx, requestId) =>
-  handleUpload(req, await pipelineDeps(log, requestId)),
+export const POST = withRequestLog(
+  "POST /api/documents/upload",
+  async (req: NextRequest, log, _ctx, requestId) => handleUpload(req, await pipelineDeps(log, requestId)),
 );

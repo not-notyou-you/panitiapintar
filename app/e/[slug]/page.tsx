@@ -29,7 +29,11 @@ async function load(slug: string): Promise<Loaded | null> {
     if (committee.status !== "active") return { kind: "ok", committee, docCount: 0, lastUpdated: null };
     // Same RPC as the chat route; only counts and dates are used here, content is discarded.
     const docs = await loadPublicContext(slug);
-    const lastUpdated = docs.map((d) => d.updated_at).sort().at(-1) ?? null;
+    const lastUpdated =
+      docs
+        .map((d) => d.updated_at)
+        .sort()
+        .at(-1) ?? null;
     return { kind: "ok", committee, docCount: docs.length, lastUpdated };
   } catch (err) {
     logger.error(

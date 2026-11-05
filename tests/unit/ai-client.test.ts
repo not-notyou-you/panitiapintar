@@ -191,7 +191,10 @@ describe("parseChatPublicOutput", () => {
   it.each([
     ["NOT_FOUND", { kind: "not_found" }],
     ['{"answer":"NOT_FOUND","source_doc_ids":[]}', { kind: "not_found" }],
-    ['```json\n{"answer":"Ya.","source_doc_ids":["a"]}\n```', { kind: "answer", answer: "Ya.", sourceDocIds: ["a"] }],
+    [
+      '```json\n{"answer":"Ya.","source_doc_ids":["a"]}\n```',
+      { kind: "answer", answer: "Ya.", sourceDocIds: ["a"] },
+    ],
     ['{"answer":"Ya."}', { kind: "answer", answer: "Ya.", sourceDocIds: [] }],
   ])("parses %s", (raw, expected) => {
     expect(parseChatPublicOutput(raw)).toEqual({ ok: true, value: expected });

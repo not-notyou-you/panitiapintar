@@ -13,9 +13,14 @@ export function AdminShell({ children, superAdmin = false }: { children: ReactNo
             Kepanitiaanku
           </Link>
           {superAdmin ? (
-            <Link href="/admin" className="tab">
-              Semua acara
-            </Link>
+            <>
+              <Link href="/admin" className="tab">
+                Semua acara
+              </Link>
+              <Link href="/admin/logs" className="tab">
+                Log
+              </Link>
+            </>
           ) : null}
           <form action="/auth/logout" method="post">
             <button type="submit" className="btn btn-ghost">

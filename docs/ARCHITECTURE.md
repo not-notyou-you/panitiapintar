@@ -53,9 +53,9 @@ panitiapintar/
 │   ├── admin/
 │   │   ├── page.tsx                     # super admin: semua kepanitiaan
 │   │   ├── new/page.tsx
-│   │   ├── logs/page.tsx                # super admin: audit & AI logs
+│   │   ├── logs/page.tsx                # super admin: audit | ai | keamanan
 │   │   └── [committeeId]/
-│   │       ├── page.tsx                 # tab: dokumen | anggota | pengaturan | QR
+│   │       ├── page.tsx                 # tab: dokumen | anggota | QR | chat log | pengaturan
 │   │       └── documents/[docId]/review/page.tsx
 │   └── api/
 │       ├── chat/public/route.ts
@@ -64,8 +64,10 @@ panitiapintar/
 │       ├── documents/upload/route.ts
 │       ├── documents/[id]/refine/route.ts
 │       ├── qr/[slug]/route.ts
+│       ├── admin/logs/export/route.ts   # CSV super admin
 │       ├── cron/retention/route.ts
 │       └── health/route.ts
+│   ├── error.tsx · global-error.tsx · not-found.tsx   # Retro Window + requestId
 ├── components/
 │   ├── ui/                              # Button, Badge, Dialog, Table …
 │   ├── chat/                            # ChatWindow, ChatBubble, PrivacyBanner …
@@ -78,7 +80,7 @@ panitiapintar/
 │   ├── context/
 │   ├── ai/
 │   │   ├── client.ts
-│   │   ├── prompts/{refine,chat-public,chat-internal,rundown,checklist}.ts
+│   │   ├── prompts/{refine,chat-public,chat-internal,generate}.ts
 │   │   └── with-ai-logging.ts
 │   ├── log/
 │   ├── rate-limit/

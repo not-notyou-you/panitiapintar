@@ -27,7 +27,10 @@ export interface UploadDeps extends RouteDeps {
 type UploadRejection = RejectReason | "duplicate" | "quota" | "too_long" | "empty" | "timeout";
 
 const REJECTION: Record<UploadRejection, { code: ErrorCode; message: string }> = {
-  bad_type: { code: "UNSUPPORTED_FILE", message: "Tipe file tidak didukung. Gunakan PDF, DOCX, TXT, atau MD." },
+  bad_type: {
+    code: "UNSUPPORTED_FILE",
+    message: "Tipe file tidak didukung. Gunakan PDF, DOCX, TXT, atau MD.",
+  },
   too_large: { code: "PAYLOAD_TOO_LARGE", message: "Ukuran file maksimal 10 MB." },
   encrypted: { code: "UNPROCESSABLE", message: "PDF terenkripsi atau berpassword tidak dapat diproses." },
   macro: { code: "UNPROCESSABLE", message: "Dokumen berisi makro dan ditolak." },
@@ -44,7 +47,8 @@ const SUSPICIOUS: ReadonlySet<UploadRejection> = new Set(["macro", "zip_bomb", "
 
 function reject(deps: RouteDeps, reason: UploadRejection): never {
   deps.log.warn({ event: "document.upload.rejected", reason }, "upload rejected");
-  if (SUSPICIOUS.has(reason)) deps.log.warn({ event: "security.upload.suspicious", reason }, "suspicious upload");
+  if (SUSPICIOUS.has(reason))
+    deps.log.warn({ event: "security.upload.suspicious", reason }, "suspicious upload");
   const r = REJECTION[reason];
   throw new AppError(r.code, r.message);
 }
@@ -75,7 +79,11 @@ async function readBody(req: Request, limit: number): Promise<Uint8Array<ArrayBu
 }
 
 function sanitizeTitle(raw: string): string {
-  return raw.replace(/[\u0000-\u001F\u007F]/g, " ").replace(/\s+/g, " ").trim().slice(0, 150);
+  return raw
+    .replace(/[\u0000-\u001F\u007F]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, 150);
 }
 
 // POST /api/documents/upload — ARCHITECTURE §5.3 steps 1–5; step 6 (refine) is scheduled.
@@ -85,7 +93,8 @@ export function handleUpload(req: Request, deps: UploadDeps): Promise<Response> 
     const limit = MAX_FILE_BYTES + MULTIPART_OVERHEAD;
     if (Number(req.headers.get("content-length") ?? "0") > limit) reject(deps, "too_large");
     const contentType = req.headers.get("content-type") ?? "";
-    if (!contentType.startsWith("multipart/form-data")) throw new AppError("INVALID_INPUT", "Format unggahan tidak valid.");
+    if (!contentType.startsWith("multipart/form-data"))
+      throw new AppError("INVALID_INPUT", "Format unggahan tidak valid.");
     const body = await readBody(req, limit);
     let form: FormData;
     try {
@@ -98,14 +107,20 @@ export function handleUpload(req: Request, deps: UploadDeps): Promise<Response> 
     const fileName = file instanceof File ? file.name : "";
     const fields = uploadFieldsSchema.safeParse({
       committeeId: form.get("committeeId"),
-      title: sanitizeTitle(typeof rawTitle === "string" && rawTitle.trim() ? rawTitle : fileName.replace(/\.[^.]*$/, "")),
+      title: sanitizeTitle(
+        typeof rawTitle === "string" && rawTitle.trim() ? rawTitle : fileName.replace(/\.[^.]*$/, ""),
+      ),
     });
     if (!fields.success || !(file instanceof File)) {
       throw new AppError("INVALID_INPUT", "Lengkapi judul dan file.");
     }
     const { committeeId, title } = fields.data;
 
-    const actor = await requireMembership(committeeId, "admin", routeGuard(deps, "POST /api/documents/upload"));
+    const actor = await requireMembership(
+      committeeId,
+      "admin",
+      routeGuard(deps, "POST /api/documents/upload"),
+    );
     const rl = await deps.rateLimit("upload", actor.userId);
     if (!rl.ok) throw new RateLimitedError(rl.retryAfterSeconds);
 
@@ -129,7 +144,11 @@ export function handleUpload(req: Request, deps: UploadDeps): Promise<Response> 
       throw err;
     }
     deps.log.info(
-      { event: "document.extract.completed", chars: text.length, durationMs: Math.round(performance.now() - started) },
+      {
+        event: "document.extract.completed",
+        chars: text.length,
+        durationMs: Math.round(performance.now() - started),
+      },
       "extract completed",
     );
 
@@ -141,7 +160,9 @@ export function handleUpload(req: Request, deps: UploadDeps): Promise<Response> 
     if (listErr) throw new Error(`document list failed: ${listErr.code}`);
     const rows = (existing ?? []) as { status: string; sha256: string }[];
     if (rows.some((d) => d.sha256 === sha256)) reject(deps, "duplicate");
-    if (rows.filter((d) => d.status !== "rejected" && d.status !== "archived").length >= MAX_ACTIVE_DOCUMENTS) {
+    if (
+      rows.filter((d) => d.status !== "rejected" && d.status !== "archived").length >= MAX_ACTIVE_DOCUMENTS
+    ) {
       reject(deps, "quota");
     }
 
@@ -186,7 +207,12 @@ export function handleUpload(req: Request, deps: UploadDeps): Promise<Response> 
     if (vErr) throw new Error(`version insert failed: ${vErr.code}`);
     const { error: sErr } = await deps.svc
       .from("documents")
-      .update({ pii_summary: scan.found, status: "refining", version: 2, updated_at: new Date().toISOString() })
+      .update({
+        pii_summary: scan.found,
+        status: "refining",
+        version: 2,
+        updated_at: new Date().toISOString(),
+      })
       .eq("id", documentId);
     if (sErr) throw new Error(`status update failed: ${sErr.code}`);
 
@@ -219,7 +245,8 @@ export function handleStatus(documentId: string, deps: StatusDeps): Promise<Resp
   return respond(deps, async () => {
     const g = routeGuard(deps, "GET /api/documents/[id]/status");
     await requireUser(g);
-    if (!uuidSchema.safeParse(documentId).success) throw new AppError("NOT_FOUND", "Dokumen tidak ditemukan.");
+    if (!uuidSchema.safeParse(documentId).success)
+      throw new AppError("NOT_FOUND", "Dokumen tidak ditemukan.");
     const doc = await loadDocument(deps.client, documentId, deps.log);
     await requireMembership(doc.committee_id, undefined, g);
     let { status, status_reason: statusReason, version } = doc;
@@ -227,7 +254,10 @@ export function handleStatus(documentId: string, deps: StatusDeps): Promise<Resp
       status = "refine_failed";
       statusReason = "timeout";
       version += 1;
-      deps.log.error({ event: "document.refine.failed", documentId, error: { code: "stale" } }, "refine stale");
+      deps.log.error(
+        { event: "document.refine.failed", documentId, error: { code: "stale" } },
+        "refine stale",
+      );
     }
     return NextResponse.json(
       { status, statusReason: statusReason ?? undefined, version, requestId: deps.requestId },
@@ -242,7 +272,8 @@ export function handleRefineRetry(req: Request, documentId: string, deps: Upload
     assertSameOrigin(req.headers.get("origin"), deps.appUrl, deps.log);
     const g = routeGuard(deps, "POST /api/documents/[id]/refine");
     await requireUser(g);
-    if (!uuidSchema.safeParse(documentId).success) throw new AppError("NOT_FOUND", "Dokumen tidak ditemukan.");
+    if (!uuidSchema.safeParse(documentId).success)
+      throw new AppError("NOT_FOUND", "Dokumen tidak ditemukan.");
     const doc = await loadDocument(deps.client, documentId, deps.log);
     await requireMembership(doc.committee_id, "admin", g);
     const rl = await deps.rateLimit("refine", doc.committee_id); // SEC-07: per committee
@@ -252,7 +283,12 @@ export function handleRefineRetry(req: Request, documentId: string, deps: Upload
     }
     const { data, error } = await deps.svc
       .from("documents")
-      .update({ status: "refining", status_reason: null, version: doc.version + 1, updated_at: new Date().toISOString() })
+      .update({
+        status: "refining",
+        status_reason: null,
+        version: doc.version + 1,
+        updated_at: new Date().toISOString(),
+      })
       .eq("id", documentId)
       .eq("version", doc.version)
       .select("id");

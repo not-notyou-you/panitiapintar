@@ -8,6 +8,8 @@ export const runtime = "nodejs";
 
 type Ctx = { params: Promise<{ kind: string }> };
 
-export const POST = withRequestLog<Ctx>("POST /api/generate/[kind]", async (req: NextRequest, log, ctx, requestId) =>
-  handleGenerate((await ctx.params).kind, req, await panitiaDeps(log, requestId)),
+export const POST = withRequestLog<Ctx>(
+  "POST /api/generate/[kind]",
+  async (req: NextRequest, log, ctx, requestId) =>
+    handleGenerate((await ctx.params).kind, req, await panitiaDeps(log, requestId)),
 );

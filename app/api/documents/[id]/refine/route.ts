@@ -9,6 +9,8 @@ export const maxDuration = 60;
 
 type Ctx = { params: Promise<{ id: string }> };
 
-export const POST = withRequestLog<Ctx>("POST /api/documents/[id]/refine", async (req: NextRequest, log, ctx, requestId) =>
-  handleRefineRetry(req, (await ctx.params).id, await pipelineDeps(log, requestId)),
+export const POST = withRequestLog<Ctx>(
+  "POST /api/documents/[id]/refine",
+  async (req: NextRequest, log, ctx, requestId) =>
+    handleRefineRetry(req, (await ctx.params).id, await pipelineDeps(log, requestId)),
 );

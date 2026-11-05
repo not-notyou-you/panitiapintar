@@ -206,6 +206,10 @@ Sumber kebenaran: [`supabase/migrations/0005_admin.sql`](../supabase/migrations/
 | Anggota yang diundang tidak punya baris `profiles` | Trigger `on_auth_user_created` → `handle_new_user()` (`on conflict do nothing`; seed memakai upsert) |
 | Undangan & daftar anggota | `find_user_id_by_email(text)` (service role saja); `committee_members(p_committee)` untuk admin/super admin (termasuk email anggota acaranya sendiri) |
 
+## 2d. Observabilitas (migrasi `0006_observability.sql`)
+
+Tidak mengubah tabel maupun policy. Index `ai_calls(purpose, occurred_at desc)`, `audit_logs(outcome, occurred_at desc)`, dan index parsial `chat_logs(committee_id, created_at desc) where answered = false` untuk filter `/admin/logs` dan tab Chat Log. Fungsi `security_rate_limit_windows(p_since)` (SECURITY DEFINER, `42501` bila bukan super admin, grant ke `authenticated`) mengembalikan jendela `rate_limits` maks. 7 hari terakhir dengan `hits > 5` (maks. 500 baris); batas per bucket dibandingkan di `lib/admin/logs.ts` dengan `RATE_LIMITS`. Karena `purge_expired_logs` menghapus `rate_limits` > 2 hari, tab Keamanan hanya melihat 2 hari terakhir untuk rate limit.
+
 ## 3. Fungsi bantu (migrasi `0002_functions.sql`)
 
 ```sql

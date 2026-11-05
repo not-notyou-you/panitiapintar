@@ -59,8 +59,16 @@ export const DOCUMENT_COLUMNS =
  * Reads a document with the user's JWT. RLS hides documents of other committees, so a foreign id
  * looks exactly like a missing one (404, no existence leak). Membership is still checked afterwards.
  */
-export async function loadDocument(client: SupabaseClient, documentId: string, log: Logger): Promise<DocumentRow> {
-  const { data, error } = await client.from("documents").select(DOCUMENT_COLUMNS).eq("id", documentId).maybeSingle();
+export async function loadDocument(
+  client: SupabaseClient,
+  documentId: string,
+  log: Logger,
+): Promise<DocumentRow> {
+  const { data, error } = await client
+    .from("documents")
+    .select(DOCUMENT_COLUMNS)
+    .eq("id", documentId)
+    .maybeSingle();
   if (error && error.code !== "22P02") throw new Error(`document read failed: ${error.code}`);
   if (!data) {
     log.warn({ event: "auth.access.denied", route: "document", required: "member" }, "document not visible");

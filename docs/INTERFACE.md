@@ -258,6 +258,7 @@ Hanya dokumen `DISETUJUI` yang dipakai chatbot. Dropdown visibilitas nonaktif un
 - Tab **AI**: tiga kartu angka (panggilan hari ini, rata-rata latensi, % error/fallback) + grafik batang per jam, warna navy solid.
 - Klik baris membuka panel samping berisi `metadata` JSON (tanpa data pribadi) dan tombol salin `requestId`.
 - Hasil `DENIED`/`FAILURE` memakai badge merah; `SUCCESS` badge garis.
+- Filter dan panel detail memakai parameter URL (`?tab=&range=&committee=&action=&outcome=&detail=`), jadi bisa dibagikan dan tetap jalan tanpa JavaScript. Tab Keamanan: audit `denied` + `security.canary_leaked` (7 hari) dan jendela rate limit yang terlampaui (2 hari).
 
 ### 4.10 Halaman error
 
@@ -269,6 +270,7 @@ Hanya dokumen `DISETUJUI` yang dipakai chatbot. Dropdown visibilitas nonaktif un
 │ [Kembali]                          │
 └────────────────────────────────────┘
 ```
+`app/error.tsx` membaca `requestId` dari `<meta name="request-id">` yang ditulis root layout; `not-found.tsx` membacanya dari header. `global-error.tsx` (layout ikut gagal) hanya punya `digest` Next.js.
 
 ## 5. Komponen
 
