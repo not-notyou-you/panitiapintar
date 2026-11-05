@@ -30,6 +30,8 @@ Test unit dan keamanan **tidak memanggil Gemini sungguhan**; gunakan mock `lib/a
 | `csrf.test.ts` | SEC-11 | POST dengan `Origin` asing → 403 |
 | `logging.test.ts` | SEC-12 | Tangkap output logger selama alur chat dengan PII palsu; tidak ada nilai PII, email, IP mentah, atau isi dokumen |
 | `audit.test.ts` | SEC-13 | Approve & ubah visibilitas menulis `audit_logs`; UPDATE ke `audit_logs` → error |
+| `document-pipeline.test.ts` | SEC-02, SEC-05 | Mock Gemini: sukses → `ai_refined` teredaksi + `needs_review`; output tidak valid / 500 → `refine_failed` + retry; PII di keluaran AI tetap disensor; `refining` macet → `timeout` |
+| `admin_0005.test.sql` | SEC-03, SEC-04, SEC-13 | pgTAP: kolom `committees` terkunci, admin terakhir, audit yang benar-benar gagal membatalkan approve, bucket privat |
 | `headers.test.ts` | SEC-09 | Respons halaman memuat CSP, HSTS, X-Frame-Options, nosniff |
 
 ## 3. E2E (Playwright)
@@ -37,8 +39,8 @@ Test unit dan keamanan **tidak memanggil Gemini sungguhan**; gunakan mock `lib/a
 1. Pengunjung membuka `/e/festival-teknologi-fiktif`, bertanya lokasi → jawaban + sumber.
 2. Pengunjung bertanya anggaran → "belum tersedia" + kontak resmi.
 3. Pengunjung mengetik nomor HP → peringatan muncul sebelum kirim.
-4. Admin login → unggah DOCX dummy → status "Sedang dirapikan" → halaman tinjau → edit → approve → ubah ke Publik.
-5. Anggota acara A membuka URL ruang kerja acara B → halaman "bukan anggota".
+4. Admin login → unggah DOCX dummy → status "Sedang dirapikan" → halaman tinjau → edit → approve → ubah ke Publik → langsung terjawab di `/e/[slug]` (`admin-flow.spec.ts`; magic link diambil dari Mailpit lokal).
+5. Anggota acara A membuka URL acara B → halaman "bukan anggota" (sementara `/admin/[id]` dan `/api/qr`; `/panitia/[id]` ditambahkan di Fase 3).
 6. Panitia membuat rundown → tabel tampil → tombol Salin.
 7. Super admin membuka `/admin/logs` → aksi approve dari langkah 4 terlihat dengan `requestId`.
 
