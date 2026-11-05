@@ -21,7 +21,8 @@ export const PII_LABELS: Record<PiiType, string> = {
 // local part ("081234567890@x.test") and leave the rest of the address behind.
 // Digit lookarounds are used instead of \b so "HP:0812..." and "NIM00000..." still match.
 const PATTERNS: ReadonlyArray<readonly [PiiType, RegExp]> = [
-  ["email", /[\w.+-]+@[\w-]+(?:\.[\w-]+)+/g],
+  // Local part bounded to 64 (RFC 5321): an unbounded `+` backtracks quadratically on long runs without "@".
+  ["email", /[\w.+-]{1,64}@[\w-]+(?:\.[\w-]+)+/g],
   ["npwp", /(?<!\d)\d{2}\.\d{3}\.\d{3}\.\d-\d{3}\.\d{3}(?!\d)/g],
   ["nik", /(?<!\d)\d{16}(?!\d)/g],
   ["nim", /(?<!\d)0000\d{7}(?!\d)/g],

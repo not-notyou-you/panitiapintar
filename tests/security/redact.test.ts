@@ -131,3 +131,20 @@ describe("redactDeep()", () => {
     expect(JSON.stringify(out)).not.toContain("a@contoh.test");
   });
 });
+
+describe("redact performance (DoS guard)", () => {
+  it.each([
+    ["word chars", "a".repeat(200_000)],
+    ["dots and plus", "a.b+".repeat(50_000)],
+    ["digits", "1".repeat(200_000)],
+    ["at-signs", "a@".repeat(100_000)],
+  ])("is linear on a 200k run of %s", (_label, input) => {
+    const started = performance.now();
+    redact(input);
+    expect(performance.now() - started).toBeLessThan(500);
+  });
+
+  it("still redacts an address whose local part exceeds 64 chars", () => {
+    expect(redact(`${"x".repeat(80)}@contoh.test`).text).not.toContain("@contoh.test");
+  });
+});
