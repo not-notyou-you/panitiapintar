@@ -1,6 +1,21 @@
-// SEC-12, initial version: logger-level guarantees. The full chat-flow capture lands in Fase 4.
-import { describe, expect, it } from "vitest";
+// SEC-12: logger-level guarantees, then whole flows (internal chat, generators, upload + refine) with
+// fake PII: no PII value, email, raw IP, or document content may appear in any emitted log line.
+import { beforeAll, describe, expect, it } from "vitest";
+import { createAiClient } from "@/lib/ai/client";
+import { mockTransport } from "@/lib/ai/mock-transport";
+import { handleUpload } from "@/lib/api/documents";
+import { handleGenerate, handleInternalChat } from "@/lib/api/panitia";
+import { refineDocument } from "@/lib/documents/pipeline";
 import { captureLogger } from "../helpers/capture-logger";
+import { createDocument, dbAvailable, service } from "../helpers/db";
+import {
+  jsonRequest,
+  panitiaDeps,
+  setupActors,
+  uploadDeps,
+  uploadRequest,
+  type Actors,
+} from "../helpers/phase2";
 
 const FAKE = {
   phone: "0812-0000-4321",
@@ -95,5 +110,104 @@ describe("logger never emits PII, secrets, or document content", () => {
     const { log, lines } = captureLogger("info");
     log.debug({ event: "hidden" });
     expect(lines).toHaveLength(0);
+  });
+});
+
+// Document text that must never be logged, plus PII that must never be logged unredacted.
+const DOC_SECRET = "Konsumsi panitia dianggarkan Rp4.750.000 dari dana sponsor utama";
+
+describe.skipIf(!dbAvailable)("flows log no PII, emails, raw IPs, or document content", () => {
+  let a: Actors;
+  beforeAll(async () => {
+    a = await setupActors("lg");
+    await createDocument({
+      committeeId: a.A.id,
+      title: "Anggaran konsumsi",
+      visibility: "internal",
+      status: "approved",
+      content: `${DOC_SECRET}. Kontak bendahara ${FAKE.phone}, ${FAKE.email}. CANARY-INT-0001`,
+    });
+  });
+
+  function expectFlowClean(lines: string[]) {
+    const out = lines.join("\n");
+    expectClean(out);
+    expect(out).not.toContain(DOC_SECRET);
+    expect(out).not.toContain("Rp4.750.000");
+    expect(out).not.toContain("@contoh.test");
+    for (const l of lines) JSON.parse(l); // one JSON object per line
+  }
+
+  it("internal chat", async () => {
+    const deps = panitiaDeps(a.member.client);
+    const res = await handleInternalChat(
+      jsonRequest({
+        committeeId: a.A.id,
+        message: `Berapa anggaran konsumsi? Saya ${FAKE.email}, HP ${FAKE.phone}, NIK ${FAKE.nik}, IP ${FAKE.ip}`,
+        history: [{ role: "user", text: `rekening ${FAKE.account} NIM ${FAKE.nim}` }],
+      }),
+      deps,
+    );
+    expect(res.status).toBe(200);
+    expect(deps.lines.some((l) => l.includes('"event":"chat.internal.answered"'))).toBe(true);
+    expect(deps.lines.some((l) => l.includes('"event":"chat.pii.redacted"'))).toBe(true);
+    expectFlowClean(deps.lines);
+  });
+
+  it.each(["rundown", "checklist"] as const)("generator %s", async (kind) => {
+    const deps = panitiaDeps(a.member.client);
+    const notes = `PIC ${FAKE.email} ${FAKE.phoneIntl} ${FAKE.ip}`;
+    const body =
+      kind === "rundown"
+        ? {
+            committeeId: a.A.id,
+            eventDate: "2026-11-14",
+            start: "09:00",
+            end: "12:00",
+            activities: `Seminar ${FAKE.phone}`,
+            notes,
+          }
+        : { committeeId: a.A.id, eventDate: "2026-11-14", divisions: ["Acara"], notes };
+    const res = await handleGenerate(kind, jsonRequest(body), deps);
+    expect(res.status).toBe(200);
+    expect(deps.lines.some((l) => l.includes(`"event":"generate.${kind}.completed"`))).toBe(true);
+    expectFlowClean(deps.lines);
+  });
+
+  it("upload + refine (file name and text with PII)", async () => {
+    const scheduled: string[] = [];
+    const deps = uploadDeps(a.admin.client, scheduled);
+    const text = `# Anggaran
+
+${DOC_SECRET}.
+
+Bendahara: ${FAKE.email}, ${FAKE.phone}, NIK ${FAKE.nik}.`;
+    const res = await handleUpload(
+      uploadRequest({
+        committeeId: a.A.id,
+        file: {
+          name: `anggaran ${FAKE.phone} ${FAKE.email}.md`,
+          type: "text/markdown",
+          bytes: new TextEncoder().encode(text),
+        },
+      }),
+      deps,
+    );
+    expect(res.status).toBe(201);
+    expect(scheduled).toHaveLength(1);
+    const ai = createAiClient({
+      transport: mockTransport(),
+      models: { chat: "mock", refine: "mock" },
+      sleep: async () => {},
+    });
+    await refineDocument(scheduled[0]!, {
+      svc: service(),
+      log: deps.log,
+      requestId: deps.requestId,
+      generate: (i) => ai.generate(i),
+    });
+    expect(deps.lines.some((l) => l.includes('"event":"document.upload.received"'))).toBe(true);
+    expect(deps.lines.some((l) => l.includes('"event":"document.refine.completed"'))).toBe(true);
+    expectFlowClean(deps.lines);
   });
 });

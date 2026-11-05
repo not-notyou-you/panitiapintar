@@ -168,11 +168,12 @@ Format nama: `domain.action.result`.
 | `security.csrf.blocked` | warn | `origin` |
 | `security.upload.suspicious` | warn | `reason` |
 | `security.canary.leaked` | **fatal** | `committeeId`, `canaryId` |
-| `security.rls.denied` | warn | `table`, `operation` |
+| `security.rls.denied` | warn | `table`, `operation` (Postgres `42501` dari RLS/grant/RPC; dicatat di `toErrorBody`) |
 | `config.env.invalid` | fatal | `missing[]` |
 | `retention.purge.completed` | info | jumlah baris per tabel |
 | `retention.purge.failed` | error | `error.code` |
 | `health.check.degraded` | warn | `db`, `ai` |
+| `audit.write.failed` | error | `action`, `error.code` (aksi kritis dibatalkan, lainnya jalan terus; §7) |
 
 ## 6. Katalog aksi audit (`audit_logs.action`)
 
@@ -191,6 +192,7 @@ Format nama: `domain.action.result`.
 | `document.raw_download` | document | — |
 | `security.canary_leaked` | committee | `canaryId` |
 | `system.retention_purge` | system | jumlah baris |
+| `config.key.rotated` | system | `key` (nama variabel, bukan nilai) — dicatat lewat `npm run audit:key-rotated -- <NAMA_ENV>` |
 
 Outcome: `success` · `denied` · `failure`.
 

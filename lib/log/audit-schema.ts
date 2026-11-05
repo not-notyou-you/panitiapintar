@@ -19,6 +19,7 @@ export const AUDIT_ACTIONS = [
   "document.raw_download",
   "security.canary_leaked",
   "system.retention_purge",
+  "config.key.rotated",
 ] as const;
 
 /** Actions whose audit write must succeed, otherwise the action itself is cancelled (LOGGING §7). */

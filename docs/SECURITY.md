@@ -41,7 +41,7 @@ Model ancaman, kontrol keamanan, dan aturan implementasi. Setiap kontrol punya I
 - Konsekuensi: walau prompt injection berhasil "membujuk" model, dokumen internal **tidak ada di konteks**, jadi tidak ada yang bisa dibocorkan.
 
 ### SEC-02 · Pengaman keluaran
-- Jawaban publik dicek ulang: `redact(output)` dan deteksi kata kunci kanari. Setiap dokumen internal di seed berisi string kanari unik (`CANARY-INT-xxxx`); jika string kanari muncul di jawaban publik, jawaban diganti pesan generik dan dicatat `security.canary.leaked` (level `fatal`).
+- Jawaban publik dicek ulang: `redact(output)` dan deteksi kata kunci kanari. Jawaban chat internal dan baris generator juga melewati `redact()`; kanari tidak dicek di Mode Panitia karena anggota memang boleh membaca dokumen internal. Setiap dokumen internal di seed berisi string kanari unik (`CANARY-INT-xxxx`); jika string kanari muncul di jawaban publik, jawaban diganti pesan generik dan dicatat `security.canary.leaked` (level `fatal`).
 
 ### SEC-03 · Otorisasi berlapis
 1. `middleware.ts`: tolak `/panitia/**` dan `/admin/**` tanpa sesi.
@@ -97,7 +97,8 @@ Model ancaman, kontrol keamanan, dan aturan implementasi. Setiap kontrol punya I
   <user_question>…teks teredaksi…</user_question>
   ```
 - Karakter `<` dan `>` di dalam isi dokumen/pertanyaan di-escape agar tidak bisa menutup tag.
-- Riwayat chat dari browser **tidak dipercaya**: maks. 6 giliran, tiap giliran ≤ 1.000 karakter, peran hanya `user`/`model`, dan ikut diredaksi.
+- Riwayat chat dari browser **tidak dipercaya**: maks. 6 giliran × 1.000 karakter (publik) atau 10 giliran × 2.000 karakter (internal), peran hanya `user`/`model`, dan ikut diredaksi.
+- Semua prompt chat dan generator dirakit oleh `assembleDataPrompt()` (`lib/ai/prompts/chat-public.ts`): redaksi + escape di satu tempat. Permintaan generator dibungkus `<rundown_request>`/`<checklist_request>`.
 - Perapihan dokumen (REFINE) meminta keluaran JSON dengan schema tetap; keluaran divalidasi zod. Jika gagal validasi → `refine_failed`.
 - Admin selalu meninjau hasil REFINE sebelum approved (human-in-the-loop).
 
@@ -113,7 +114,7 @@ Model ancaman, kontrol keamanan, dan aturan implementasi. Setiap kontrol punya I
 
 - Respons 429 dengan header `Retry-After`; dicatat `ratelimit.exceeded`.
 - Opsional: Cloudflare Turnstile (gratis) di chat publik jika terjadi penyalahgunaan; dikendalikan `TURNSTILE_ENABLED`.
-- Batas ukuran body request: 16 KB untuk chat, 10 MB untuk unggah.
+- Batas ukuran body request: 16 KB untuk chat publik, 32 KB untuk chat internal dan generator (pesan 2.000 karakter + 10 giliran riwayat), 10 MB untuk unggah.
 
 ### SEC-08 · Keamanan unggahan
 - Tipe yang diizinkan: PDF, DOCX, TXT, MD. Diperiksa **ekstensi + MIME + magic bytes** (`%PDF-`, `PK\x03\x04` dengan `word/document.xml` di dalamnya).
@@ -145,13 +146,13 @@ Model ancaman, kontrol keamanan, dan aturan implementasi. Setiap kontrol punya I
 ### SEC-10 · Manajemen rahasia
 - Semua env divalidasi `lib/env.ts` (zod) saat start; variabel rahasia tidak boleh berprefiks `NEXT_PUBLIC_`.
 - File yang membaca rahasia wajib `import "server-only"`.
-- `.env*` di `.gitignore`; pre-commit hook menjalankan `gitleaks` (atau `secretlint`).
+- `.env*` di `.gitignore`. Pemindai rahasia tanpa dependensi `scripts/check-secrets.mjs` (kunci Google, `sb_secret_`, private key, env rahasia yang terisi, JWT `service_role` non-demo): pre-commit hook `.githooks/pre-commit` (aktifkan sekali: `git config core.hooksPath .githooks`) dan langkah CI `npm run check:secrets`.
 - Kunci Gemini dibatasi di Google AI Studio (restriksi API hanya Generative Language API).
 - Rotasi kunci (wajib bila ada dugaan bocor, dan tiap akhir semester):
   1. Buat kunci baru (Google AI Studio / Supabase dashboard).
   2. Perbarui env di Vercel, lalu redeploy.
   3. Cabut kunci lama.
-  4. Catat `config.key.rotated` (tanpa nilai kunci) di audit log.
+  4. Catat `config.key.rotated` (tanpa nilai kunci) di audit log: `npm run audit:key-rotated -- GEMINI_API_KEY` (env target di `.env.local`).
 
 ### SEC-11 · Sesi dan CSRF
 - Supabase Auth magic link; cookie `HttpOnly`, `Secure`, `SameSite=Lax`.
@@ -162,7 +163,7 @@ Model ancaman, kontrol keamanan, dan aturan implementasi. Setiap kontrol punya I
 
 ### SEC-12 · Log tanpa data pribadi
 - Lihat `LOGGING.md` §3. Logger memasang `redact` paths pino + fungsi `redact()` untuk field bebas.
-- IP disimpan sebagai `ip_hash = HMAC-SHA256(IP_HASH_SALT, ip)`; salt dirotasi bulanan.
+- IP disimpan sebagai `ip_hash = HMAC-SHA256(K_bulan, ip)` dengan `K_bulan = HMAC-SHA256(IP_HASH_SALT, "ip-month:YYYY-MM")` (`lib/privacy/ip-hash.ts`): kunci berganti otomatis tiap bulan (UTC), sehingga hash dari bulan berbeda tidak bisa dihubungkan. `IP_HASH_SALT` sendiri dirotasi bersama kunci lain (SEC-10).
 - Email dicatat sebagai `email_hash` saja.
 
 ### SEC-13 · Jejak audit tidak dapat diubah

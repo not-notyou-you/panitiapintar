@@ -16,7 +16,10 @@
     "test:integration": "vitest run --project integration",
     "test:security": "vitest run --project security",
     "test:e2e": "playwright test",
-    "seed:build": "tsx scripts/build-seed.ts"
+    "seed:build": "tsx scripts/build-seed.ts",
+    "check:secrets": "node scripts/check-secrets.mjs --all",
+    "audit:key-rotated": "tsx --env-file=.env.local scripts/audit-key-rotated.ts",
+    "eval": "tsx eval/run-eval.ts"
   },
   "dependencies": {
     "@google/genai": "^2.32.0",

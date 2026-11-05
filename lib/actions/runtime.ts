@@ -51,6 +51,9 @@ export async function runAction<S extends z.ZodType, T>(
 }
 
 export function toErrorBody(err: unknown, log: Logger, requestId: string) {
+  if (err instanceof DbDeniedError) {
+    log.warn({ event: "security.rls.denied", table: "(db)", operation: err.operation }, "database denied");
+  }
   if (err instanceof AppError) {
     return { code: err.code, message: err.userMessage ?? ERROR_MESSAGES[err.code], requestId };
   }
@@ -69,14 +72,24 @@ const INVALID_MESSAGES: Record<string, string> = {
   invalid_request_id: "Permintaan tidak valid.",
 };
 
+/** A 42501 from Postgres: RLS, a column grant or an RPC role check refused the caller (SEC-03 layer 3). */
+export class DbDeniedError extends AppError {
+  constructor(readonly operation: string) {
+    super("FORBIDDEN");
+  }
+}
+
 /** Turns a PostgREST/RPC error into an AppError. Unknown errors are rethrown as INTERNAL. */
-export function dbError(error: PostgrestError | { code?: string; message?: string }): AppError {
+export function dbError(
+  error: PostgrestError | { code?: string; message?: string },
+  operation = "rpc",
+): AppError {
   const msg = error.message ?? "";
   switch (error.code) {
     case "40001":
       return new AppError("CONFLICT");
     case "42501":
-      return new AppError("FORBIDDEN");
+      return new DbDeniedError(operation);
     case "P0002":
       return new AppError("NOT_FOUND", "Data tidak ditemukan.");
     case "22023":
