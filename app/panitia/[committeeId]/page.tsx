@@ -60,15 +60,15 @@ export default async function WorkspacePage({ params, searchParams }: Props) {
 
   return (
     <AdminShell superAdmin={isSuperAdmin}>
-      <div className="grid gap-5 md:grid-cols-[220px_1fr]">
-        <aside className="flex flex-col gap-5">
+      <div className="grid grid-cols-1 gap-5 md:grid-cols-[220px_minmax(0,1fr)]">
+        <aside className="flex min-w-0 flex-col gap-5">
           <Window title="Kepanitiaan">
             <ul className="m-0 flex list-none flex-col gap-1 p-0">
               {mine.map((m) => (
                 <li key={m.committees!.id}>
                   <Link
                     href={`/panitia/${m.committees!.id}`}
-                    className="tab block"
+                    className="tab block break-words"
                     aria-current={m.committees!.id === committeeId ? "page" : undefined}
                   >
                     {m.committees!.name}
@@ -83,7 +83,7 @@ export default async function WorkspacePage({ params, searchParams }: Props) {
             ) : (
               <ul className="m-0 flex list-none flex-col gap-2 p-0 text-xs">
                 {(docs ?? []).map((d) => (
-                  <li key={d.id as string} className="flex items-center gap-2">
+                  <li key={d.id as string} className="flex min-w-0 items-center gap-2">
                     <span
                       className={`badge ${d.visibility === "public" ? "badge-public" : "badge-internal"}`}
                     >
@@ -97,7 +97,7 @@ export default async function WorkspacePage({ params, searchParams }: Props) {
           </Window>
         </aside>
 
-        <Window title={`${committee.name} · Mode Panitia`}>
+        <Window title={`${committee.name} · Mode Panitia`} className="min-w-0">
           <div className="flex flex-col gap-4">
             {committee.status !== "active" ? (
               <p className="pii m-0">Acara ini sudah diarsipkan. Dokumen tetap bisa ditanyakan.</p>

@@ -1,4 +1,4 @@
-// TESTING §3 scenarios 4–5 (AI_MOCK=true, local Supabase with seed, magic links read from Mailpit).
+// TESTING §3 scenarios 4–7 (AI_MOCK=true, local Supabase with seed, magic links read from Mailpit).
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import { expect, test, type Page } from "@playwright/test";
@@ -36,7 +36,9 @@ test.beforeAll(async () => {
 });
 
 test.beforeEach(async ({ page }) => {
-  await page.setExtraHTTPHeaders({ "x-forwarded-for": `10.7.${Math.floor(Math.random() * 250)}.${Math.floor(Math.random() * 250)}` });
+  await page.setExtraHTTPHeaders({
+    "x-forwarded-for": `10.7.${Math.floor(Math.random() * 250)}.${Math.floor(Math.random() * 250)}`,
+  });
 });
 
 /** Requests a magic link through the UI and follows it from Mailpit. */
@@ -53,8 +55,13 @@ async function login(page: Page, email: string) {
     const list = (await res.json()) as { messages?: { ID: string; Created: string }[] };
     const msg = list.messages?.[0];
     if (msg && Date.parse(msg.Created) >= since - 2_000) {
-      const full = (await (await fetch(`${MAILPIT}/api/v1/message/${msg.ID}`)).json()) as { Text: string; HTML: string };
-      link = (full.Text + full.HTML).match(/https?:\/\/[^\s"'<>]+\/auth\/v1\/verify[^\s"'<>]+/)?.[0]?.replace(/&amp;/g, "&");
+      const full = (await (await fetch(`${MAILPIT}/api/v1/message/${msg.ID}`)).json()) as {
+        Text: string;
+        HTML: string;
+      };
+      link = (full.Text + full.HTML)
+        .match(/https?:\/\/[^\s"'<>]+\/auth\/v1\/verify[^\s"'<>]+/)?.[0]
+        ?.replace(/&amp;/g, "&");
     }
     if (!link) await page.waitForTimeout(500);
   }
@@ -70,7 +77,9 @@ test("0. tanpa sesi, /admin dan /panitia dialihkan ke /login", async ({ page }) 
   await expect(page).toHaveURL(/\/login/);
 });
 
-test("4. admin unggah DOCX → dirapikan → tinjau → edit → setujui → publik → terjawab di /e/<slug>", async ({ page }) => {
+test("4. admin unggah DOCX → dirapikan → tinjau → edit → setujui → publik → terjawab di /e/<slug>", async ({
+  page,
+}) => {
   test.setTimeout(150_000);
   const id = await committeeId(SLUG);
   const marker = `Zetaprima${Date.now().toString(36)}`;
@@ -83,7 +92,10 @@ test("4. admin unggah DOCX → dirapikan → tinjau → edit → setujui → pub
     name: "booth.docx",
     mimeType: DOCX_MIME,
     buffer: Buffer.from(
-      makeDocx([`Booth ${marker} berada di lantai 3 Gedung C dekat lift.`, "Hubungi panitia di 0812-0000-4321."]),
+      makeDocx([
+        `Booth ${marker} berada di lantai 3 Gedung C dekat lift.`,
+        "Hubungi panitia di 0812-0000-4321.",
+      ]),
     ),
   });
   await page.getByRole("button", { name: "+ Unggah dokumen" }).click();
@@ -134,4 +146,60 @@ test("5. anggota acara A membuka halaman acara B → bukan anggota", async ({ pa
   await expect(page.getByText("Kamu bukan anggota kepanitiaan ini.")).toBeVisible();
   const qr = await page.request.get(`/api/qr/${OTHER_SLUG}`);
   expect(qr.status()).toBe(403);
+  await page.goto(`/panitia/${other}`);
+  await expect(page.getByText("Kamu bukan anggota kepanitiaan ini.")).toBeVisible();
+});
+
+test("6. panitia membuat rundown → tabel tampil → tombol Salin", async ({ page, context }) => {
+  await context.grantPermissions(["clipboard-read", "clipboard-write"]);
+  const id = await committeeId(SLUG);
+  await login(page, "anggota.festek@contoh.test");
+  await page.goto(`/panitia/${id}?tab=rundown`);
+  // next dev compiles client chunks on first visit; filling before that settles gets reset by Fast Refresh.
+  await page.waitForLoadState("networkidle");
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(360);
+
+  await page.getByLabel("Tanggal acara").fill("2026-12-05");
+  await page.getByLabel("Mulai").fill("09:00");
+  await page.getByLabel("Selesai").fill("12:00");
+  await page.getByLabel("Isi acara").fill("Seminar, lomba UI/UX, awarding");
+  await page.getByRole("button", { name: "Buat draf rundown" }).click();
+  const table = page.getByRole("table", { name: "Draf rundown" });
+  await expect(table.getByRole("cell", { name: "Seminar" })).toBeVisible();
+  await expect(table.getByRole("cell", { name: "awarding" })).toBeVisible();
+  await expect(page.getByText("DRAF AI · periksa sebelum dipakai")).toBeVisible();
+  await page.getByRole("button", { name: "Salin" }).click();
+  await expect(page.getByRole("button", { name: "Tersalin" })).toBeVisible();
+  const copied = await page.evaluate(() => navigator.clipboard.readText());
+  expect(copied).toContain("Waktu\tDurasi (menit)\tKegiatan\tPIC divisi");
+  expect(copied).toContain("Seminar");
+
+  // Internal chat on the same workspace: internal answer carries the INTERNAL label.
+  await page.goto(`/panitia/${id}?tab=tanya`);
+  await page.getByLabel("Pertanyaan").fill("Berapa total anggaran konsumsi?");
+  await page.getByRole("button", { name: "Kirim" }).click();
+  await expect(page.getByText("INTERNAL · jangan dibagikan ke publik")).toBeVisible();
+});
+
+test("7. super admin membuka /admin/logs → aksi approve terlihat dengan requestId", async ({ page }) => {
+  const id = await committeeId(SLUG);
+  await login(page, "superadmin@contoh.test");
+  await page.goto(`/admin/logs?tab=audit&range=1&committee=${id}&action=document.approve`);
+  await page.waitForLoadState("networkidle");
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(360);
+  const row = page.getByRole("row", { name: /document\.approve/ }).first();
+  await expect(row).toBeVisible();
+  await expect(row.getByText("SUCCESS")).toBeVisible();
+  await expect(row.getByText(/^req_/)).toBeVisible();
+  await row.getByRole("link", { name: "document.approve" }).click();
+  const detail = page.getByRole("complementary", { name: "Detail catatan" });
+  await expect(detail.getByText(/^req_[0-9A-Z]{26}$/)).toBeVisible();
+  await expect(detail).toContainText('"edited"');
+
+  await page.getByRole("link", { name: "AI", exact: true }).click();
+  await expect(page.getByText("Panggilan hari ini")).toBeVisible();
+  await expect(page.getByRole("img", { name: /Grafik batang panggilan AI per jam/ })).toBeVisible();
+  const csv = await page.request.get(`/api/admin/logs/export?tab=audit&range=1&committee=${id}`);
+  expect(csv.status()).toBe(200);
+  expect(await csv.text()).toContain("document.approve");
 });

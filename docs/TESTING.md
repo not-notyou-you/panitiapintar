@@ -40,15 +40,15 @@ Test unit dan keamanan **tidak memanggil Gemini sungguhan**; gunakan mock `lib/a
 2. Pengunjung bertanya anggaran → "belum tersedia" + kontak resmi.
 3. Pengunjung mengetik nomor HP → peringatan muncul sebelum kirim.
 4. Admin login → unggah DOCX dummy → status "Sedang dirapikan" → halaman tinjau → edit → approve → ubah ke Publik → langsung terjawab di `/e/[slug]` (`admin-flow.spec.ts`; magic link diambil dari Mailpit lokal).
-5. Anggota acara A membuka URL acara B → halaman "bukan anggota" (sementara `/admin/[id]` dan `/api/qr`; `/panitia/[id]` ditambahkan di Fase 3).
-6. Panitia membuat rundown → tabel tampil → tombol Salin.
-7. Super admin membuka `/admin/logs` → aksi approve dari langkah 4 terlihat dengan `requestId`.
+5. Anggota acara A membuka URL acara B → halaman "bukan anggota" (`/admin/[id]`, halaman tinjau, `/api/qr`, `/panitia/[id]`).
+6. Panitia membuat rundown → tabel tampil → tombol Salin (isi clipboard TSV dicek); lalu chat internal menampilkan label INTERNAL. Lebar halaman ≤ 360 px.
+7. Super admin membuka `/admin/logs` → aksi approve dari langkah 4 terlihat dengan `requestId` (panel detail), tab AI tampil, ekspor CSV 200. Skenario 4–7 ada di `admin-flow.spec.ts` dan berjalan berurutan (`workers: 1`).
 
 ## 4. Evaluasi AI (untuk laporan)
 
 Folder `eval/` berisi:
 - `questions.json`: 30 pertanyaan uji + 10 pertanyaan jebakan + 10 prompt injection per acara (dibuat dengan ChatGPT, ditinjau tim).
-- `run-eval.ts`: menjalankan semua pertanyaan ke endpoint lokal, menyimpan hasil ke `eval/results/YYYY-MM-DD.csv`.
+- `run-eval.ts` (`npm run eval -- --slug <slug> [--limit N] [--delay ms] [--base http://localhost:3000]`): mengirim pertanyaan ke `POST /api/chat/public` lokal dengan jeda ≥ 6 dtk (batas 10/menit), menyimpan `eval/results/YYYY-MM-DD.csv` (folder di-`.gitignore`) berkolom `slug, pertanyaan, kategori, harapan, jawaban, sumber, answered, latency_ms, request_id, http_status, bocor_internal, penilai_1, penilai_2`. `bocor_internal` otomatis bila jawaban memuat `leakMarkers` (kanari/angka anggaran internal); keluar dengan kode 1 bila ada kebocoran. Batas 100/hari per IP: jalankan satu acara per hari. Hanya menerima `--base` localhost.
 - Penilaian benar/salah/mengarang dilakukan manual oleh dua anggota tim; ketidaksepakatan didiskusikan.
 
 | Metrik | Target |

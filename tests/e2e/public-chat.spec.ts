@@ -18,7 +18,9 @@ const log = (page: Page) => page.getByRole("log", { name: "Percakapan" });
 
 test("1. visitor asks the location and gets an answer with its source", async ({ page }) => {
   await page.goto(`/e/${SLUG}`);
-  await expect(page.getByRole("heading", { level: 1, name: /Festival Teknologi Fiktif 2026/i })).toBeVisible();
+  await expect(
+    page.getByRole("heading", { level: 1, name: /Festival Teknologi Fiktif 2026/i }),
+  ).toBeVisible();
   await expect(page.getByText("Jangan ketik data pribadi.", { exact: false })).toBeVisible();
   await expect(page.getByRole("button", { name: "Di mana lokasinya?" })).toBeVisible();
 
@@ -83,7 +85,11 @@ test("3b. 'Kirim tetap' sends, and the server redacts the number", async ({ page
   const response = page.waitForResponse("**/api/chat/public");
   await page.getByTestId("pii-warning").getByRole("button", { name: "Kirim tetap" }).click();
   expect((await response).status()).toBe(200);
-  await expect(log(page).getByText(/Parkir/).last()).toBeVisible();
+  await expect(
+    log(page)
+      .getByText(/Parkir/)
+      .last(),
+  ).toBeVisible();
 });
 
 test("unknown event shows the not-found page", async ({ page }) => {
@@ -94,7 +100,11 @@ test("unknown event shows the not-found page", async ({ page }) => {
 
 test("home lists the three active events", async ({ page }) => {
   await page.goto("/");
-  for (const name of ["Festival Teknologi Fiktif 2026", "Lomba Desain Poster Fiktif 2027", "Seminar Karier Fiktif 2026"]) {
+  for (const name of [
+    "Festival Teknologi Fiktif 2026",
+    "Lomba Desain Poster Fiktif 2027",
+    "Seminar Karier Fiktif 2026",
+  ]) {
     await expect(page.getByRole("link", { name: new RegExp(name) })).toBeVisible();
   }
 });

@@ -14,3 +14,4 @@ panitiapintar-docs.zip
 *.tsbuildinfo
 /data/
 .next-e2e/
+.next-eval/
