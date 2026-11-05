@@ -5,6 +5,7 @@ import { handlePublicChat, type HandlerResult } from "@/lib/chat/public-chat";
 import { findPublicCommittee, loadPublicContext, PublicDataUnavailableError } from "@/lib/context/public";
 import { env } from "@/lib/env";
 import { errorBody, type ErrorCode } from "@/lib/http/errors";
+import { assertSameOrigin } from "@/lib/http/origin";
 import { audit } from "@/lib/log/audit";
 import { withRequestLog } from "@/lib/log/with-request-log";
 import { clientIp, ipHash } from "@/lib/privacy/ip-hash";
@@ -25,10 +26,10 @@ function error(code: ErrorCode, status: number, requestId: string): NextResponse
 
 // ARCHITECTURE.md §5.1. Step 1 (requestId, headers) happens in middleware/withRequestLog.
 export const POST = withRequestLog("POST /api/chat/public", async (req: NextRequest, log, _ctx, requestId) => {
-  // SEC-11: browsers always send Origin on POST; reject foreign ones.
-  const origin = req.headers.get("origin");
-  if (origin && origin !== new URL(env().APP_URL).origin) {
-    log.warn({ event: "security.csrf.blocked", origin }, "foreign origin");
+  // SEC-11: browsers always send Origin on POST; foreign or missing origins are rejected.
+  try {
+    assertSameOrigin(req.headers.get("origin"), env().APP_URL, log);
+  } catch {
     return error("FORBIDDEN", 403, requestId);
   }
 

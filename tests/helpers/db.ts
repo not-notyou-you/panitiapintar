@@ -35,7 +35,7 @@ export async function createUser(label: string, opts: { superAdmin?: boolean } =
   must(
     await svc
       .from("profiles")
-      .insert({ user_id: user.id, display_name: label, is_super_admin: !!opts.superAdmin }),
+      .upsert({ user_id: user.id, display_name: label, is_super_admin: !!opts.superAdmin }),
   );
   const client = createClient(url(), anonKey(), noSession);
   must(await client.auth.signInWithPassword({ email, password }));

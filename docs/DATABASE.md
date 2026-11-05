@@ -191,6 +191,21 @@ Pengecekan bersama: peran admin kepanitiaan atau super admin (`42501 forbidden`)
 
 Helper internal `doc_rpc_actor_role(uuid)` dan `doc_rpc_check_request_id(text)` tidak bisa dipanggil pengguna.
 
+## 2c. Fase 2 (migrasi `0005_admin.sql`)
+
+Sumber kebenaran: [`supabase/migrations/0005_admin.sql`](../supabase/migrations/0005_admin.sql); test: `supabase/tests/database/admin_0005.test.sql`.
+
+| Celah / kebutuhan | Perubahan |
+|---|---|
+| Admin panitia bisa `UPDATE` `committees.status`/`slug`/`created_by` langsung | `grant update (name, event_date, location, contact_public, updated_at)` saja; arsip via `archive_committee(p_committee, p_request_id)` (super admin, audit `committee.archive` di transaksi yang sama) |
+| Admin terakhir bisa diturunkan/dihapus | Trigger `memberships_keep_last_admin` (`23514 last_admin`, kunci baris `committees`); kolom yang bisa di-`UPDATE` hanya `role`. Cascade karena acara/akun dihapus tetap boleh |
+| Bucket storage belum ada | Bucket privat `documents-raw` (10 MB, 4 MIME) + policy `select/insert/delete` untuk admin kepanitiaan atau super admin; segmen pertama path diparse `storage_committee_id()` (bukan UUID → ditolak) |
+| `pii_summary` hanya dari file mentah, sehingga dokumen yang PII-nya sudah disensor tidak pernah bisa publik | Kolom `document_versions.pii_summary` (sisa PII versi itu); `set_document_visibility` menolak `public` bila versi terkini tidak `{}` (`22023 pii_present`); versi tidak bisa di-`UPDATE` |
+| Edit setelah approved | `reopen_document(p_doc, p_version_id, p_expected_version, p_request_id)`: `approved` → `needs_review`, `visibility` → `internal`, audit `document.edit_after_approve` |
+| Super admin tidak bisa unggah/menyimpan edit | Policy `documents_admin_insert` dan `versions_admin_insert` menerima `is_super_admin()` (aturan lain sama dengan 0004) |
+| Anggota yang diundang tidak punya baris `profiles` | Trigger `on_auth_user_created` → `handle_new_user()` (`on conflict do nothing`; seed memakai upsert) |
+| Undangan & daftar anggota | `find_user_id_by_email(text)` (service role saja); `committee_members(p_committee)` untuk admin/super admin (termasuk email anggota acaranya sendiri) |
+
 ## 3. Fungsi bantu (migrasi `0002_functions.sql`)
 
 ```sql
@@ -347,7 +362,7 @@ grant execute on function purge_expired_logs(int,int,int) to service_role;
 
 - Bucket `documents-raw`: **privat**, tanpa akses publik.
 - Path: `{committee_id}/{document_id}.{ext}`.
-- Policy storage: `select`/`insert`/`delete` hanya jika `is_member(committee_id,'admin')` (committee_id diambil dari segmen pertama path).
+- Policy storage: `select`/`insert`/`delete` hanya jika `is_member(committee_id,'admin')` atau super admin (committee_id diambil dari segmen pertama path lewat `storage_committee_id()`). Dibuat di `0005_admin`.
 - Unduhan file asli hanya lewat signed URL berumur 60 detik, khusus admin kepanitiaan.
 
 ## 6. Seed (`supabase/seed/`)

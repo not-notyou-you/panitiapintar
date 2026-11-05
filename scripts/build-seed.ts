@@ -76,7 +76,8 @@ export function buildSeed(): string {
         ` updated_at) values (${q(uuidFor(`identity:${u.key}`))}, ${q(id)}, ${q(id)},` +
         ` jsonb_build_object('sub', ${q(id)}, 'email', ${q(u.email)}), 'email', now(), now(), now());`,
       `insert into profiles (user_id, display_name, is_super_admin) values (${q(id)}, ${q(u.name)},` +
-        ` ${"superAdmin" in u && u.superAdmin ? "true" : "false"});`,
+        ` ${"superAdmin" in u && u.superAdmin ? "true" : "false"})` +
+        ` on conflict (user_id) do update set display_name = excluded.display_name, is_super_admin = excluded.is_super_admin;`,
     );
   }
 

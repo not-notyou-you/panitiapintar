@@ -49,6 +49,9 @@ Model ancaman, kontrol keamanan, dan aturan implementasi. Setiap kontrol punya I
 3. Database: RLS (lihat `DATABASE.md` §4) sebagai lapis terakhir.
 - `committeeId` dari URL **tidak pernah dipercaya**; keanggotaan selalu dicek ulang di server.
 - Penolakan dicatat `auth.access.denied` + `audit_logs` (outcome `denied`).
+- Super admin lolos setiap `requireMembership()` dan diperlakukan sebagai admin semua kepanitiaan, termasuk di policy insert `documents`/`document_versions` dan storage (`0005_admin`).
+- Aksi/route berbasis dokumen membaca dokumen dengan JWT pengguna: dokumen acara lain tidak terlihat lewat RLS sehingga hasilnya 404 (bukan 403), agar keberadaannya tidak bocor. Urutannya: `requireUser()` → baca dokumen → `requireMembership(doc.committee_id, …)`.
+- Pengecualian aturan service role: undangan anggota memanggil Auth Admin API (`find_user_id_by_email`, `inviteUserByEmail`) yang hanya bisa dengan service role. Dibatasi di `serviceFindOrInvite()` dan **hanya** dipanggil setelah `requireMembership(committeeId, 'admin')`; baris `memberships` tetap ditulis dengan JWT admin.
 
 ### SEC-04 · Alur dokumen aman
 - Dokumen baru selalu `internal`, `uploaded`, versi 1, tanpa approval (dipaksa policy insert `0004_harden`).
@@ -57,9 +60,12 @@ Model ancaman, kontrol keamanan, dan aturan implementasi. Setiap kontrol punya I
   2. Trigger `documents_guard_protected_columns` menolak perubahan kolom selain `title`/`updated_at`, kecuali dari fungsi resmi (flag transaksi `app.doc_rpc`) atau service role (pipeline: `refining` → `needs_review`/`refine_failed`).
 - Perubahan hanya lewat fungsi resmi `approve_document`, `reject_document`, `set_document_visibility`. Ketiganya mengecek peran (admin kepanitiaan atau super admin), optimistic locking (`version`), transisi status yang sah, lalu menulis `audit_logs` beserta `request_id` **dalam transaksi yang sama** (gagal audit = aksi batal).
 - Hanya dokumen `approved` yang bisa dijadikan `public`. `approve_document` hanya menerima versi `ai_refined`/`admin_edited` milik dokumen yang sama.
+- Ada dua ringkasan PII (jumlah saja): `documents.pii_summary` = temuan di file asli (sudah disensor, ditampilkan sebagai "disensor otomatis"); `document_versions.pii_summary` = `scanPii()` atas isi versi itu sendiri (sisa yang masih terlihat). Syarat publik memakai yang kedua pada `current_version_id`, dicek di aplikasi **dan** di `set_document_visibility` (`22023 pii_present`).
 - Admin hanya boleh menambah versi `admin_edited` atas namanya sendiri; versi `original_redacted` dan `ai_refined` hanya ditulis pipeline.
 - Ubah ke publik memerlukan dialog konfirmasi; jika `pii_summary` versi terkini tidak kosong, tombol publik dinonaktifkan sampai admin meredaksi (dicek di aplikasi sebelum RPC).
-- Setiap edit isi setelah approved mengembalikan status ke `needs_review`.
+- Setiap edit isi setelah approved mengembalikan status ke `needs_review` **dan visibilitas ke `internal`** lewat RPC `reopen_document` (audit `document.edit_after_approve`); admin harus menyetujui dan menjadikannya publik lagi secara sadar.
+- `committees`: `authenticated` hanya punya `UPDATE (name, event_date, location, contact_public, updated_at)`. `slug` tidak bisa diubah setelah dibuat (tercetak di QR); arsip hanya lewat `archive_committee()` (super admin, audit di transaksi yang sama).
+- `memberships`: hanya kolom `role` yang bisa di-`UPDATE`; trigger `memberships_keep_last_admin` menolak menurunkan/menghapus admin terakhir (`23514 last_admin`).
 - `anon` hanya bisa membaca kolom publik `committees` (`id, name, slug, event_date, location, contact_public, status`); halaman publik tidak boleh `select *`.
 
 ### SEC-05 · Redaksi data pribadi sebelum AI
@@ -102,8 +108,8 @@ Model ancaman, kontrol keamanan, dan aturan implementasi. Setiap kontrol punya I
 | `chat_public` per acara | 600/jam (melindungi kuota bersama) |
 | `chat_internal` + generator per user | 20/menit, 300/hari |
 | `upload` per user | 10/jam |
-| `refine` per kepanitiaan | 20/hari |
-| `login` (magic link) per email-hash | 5/jam |
+| `refine` (coba ulang) per kepanitiaan | 20/hari |
+| `login` (magic link) per IP-hash **dan** per email-hash | 5/jam |
 
 - Respons 429 dengan header `Retry-After`; dicatat `ratelimit.exceeded`.
 - Opsional: Cloudflare Turnstile (gratis) di chat publik jika terjadi penyalahgunaan; dikendalikan `TURNSTILE_ENABLED`.
@@ -116,6 +122,7 @@ Model ancaman, kontrol keamanan, dan aturan implementasi. Setiap kontrol punya I
 - PDF terenkripsi/berpassword ditolak.
 - File disimpan dengan nama acak (UUID), bukan nama asli; nama asli disimpan sebagai `title` setelah disanitasi.
 - Hash SHA-256 untuk deteksi duplikat.
+- Body unggahan dibaca dengan batas 10 MB + 64 KB apa pun isi `Content-Length`. DOCX: ukuran dari central directory (rasio > 100× atau > 50 MB = zip bomb), lalu `word/document.xml` di-inflate dan panjangnya harus sama dengan yang dideklarasikan.
 - File tidak pernah dieksekusi atau dirender sebagai HTML.
 
 ### SEC-09 · Keamanan keluaran ke browser
@@ -148,9 +155,10 @@ Model ancaman, kontrol keamanan, dan aturan implementasi. Setiap kontrol punya I
 
 ### SEC-11 · Sesi dan CSRF
 - Supabase Auth magic link; cookie `HttpOnly`, `Secure`, `SameSite=Lax`.
-- Route handler yang mengubah data memeriksa header `Origin` cocok dengan `APP_URL`; jika tidak, 403 dan `security.csrf.blocked`.
-- Server Actions Next.js memakai proteksi origin bawaan.
-- Logout menghapus sesi di server.
+- Setiap mutasi (route handler **dan** server action) memeriksa header `Origin` sama persis dengan origin `APP_URL` lewat `assertSameOrigin()`; asing **atau kosong** → 403 dan `security.csrf.blocked`. Klien non-browser (mis. skrip eval) wajib mengirim `Origin: APP_URL`.
+- Server Actions Next.js juga punya proteksi origin bawaan; pengecekan sendiri tetap dilakukan agar bisa diuji (`csrf.test.ts`).
+- Login hanya untuk akun yang sudah ada (`shouldCreateUser: false`); balasan formulir selalu sama agar email anggota tidak bisa ditebak. Parameter `next` hanya menerima path `/panitia…` atau `/admin…` (`safeNextPath`), tidak ada open redirect.
+- Logout: `POST /auth/logout` (cek Origin) → `signOut()` mencabut refresh token di server.
 
 ### SEC-12 · Log tanpa data pribadi
 - Lihat `LOGGING.md` §3. Logger memasang `redact` paths pino + fungsi `redact()` untuk field bebas.
