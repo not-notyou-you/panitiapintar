@@ -16,7 +16,18 @@ const noDangerousHtml = [
 ];
 
 const config = [
-  { ignores: [".next/**", ".next-e2e/**", ".next-eval/**", "test-results/**", "playwright-report/**", "node_modules/**", "panitiapintar-docs/**", "next-env.d.ts"] },
+  {
+    ignores: [
+      ".next/**",
+      ".next-e2e/**",
+      ".next-eval/**",
+      "test-results/**",
+      "playwright-report/**",
+      "node_modules/**",
+      "panitiapintar-docs/**",
+      "next-env.d.ts",
+    ],
+  },
   ...compat.extends("next/core-web-vitals", "next/typescript"),
   {
     rules: {
@@ -31,7 +42,7 @@ const config = [
   },
   {
     // SEC-01: public paths never touch the service role, directly or by building their own client.
-    files: ["app/e/**", "app/api/chat/public/**"],
+    files: ["app/(public)/**", "components/public/**", "app/api/chat/public/**"],
     rules: {
       "no-restricted-imports": [
         "error",
@@ -47,6 +58,10 @@ const config = [
               group: ["**/supabase/service", "**/supabase/service.ts", "@/lib/supabase/service"],
               message: "Service role client is forbidden in public paths (SEC-01).",
             },
+            {
+              group: ["@/components/internal/*", "@/components/internal/**", "@/app/(internal)/**"],
+              message: "Public area must not import internal-area code (separate teams, see INTERFACE §9).",
+            },
           ],
         },
       ],
@@ -56,6 +71,23 @@ const config = [
         {
           selector: "MemberExpression[property.name='SUPABASE_SERVICE_ROLE_KEY']",
           message: "Service role key is forbidden in public paths (SEC-01).",
+        },
+      ],
+    },
+  },
+  {
+    // Area boundary: internal UI is styled and owned separately from the public site.
+    files: ["app/(internal)/**", "components/internal/**"],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            {
+              group: ["@/components/public/*", "@/components/public/**", "@/app/(public)/**"],
+              message: "Internal area must not import public-area code (separate teams, see INTERFACE §9).",
+            },
+          ],
         },
       ],
     },

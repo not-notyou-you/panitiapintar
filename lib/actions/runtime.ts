@@ -57,7 +57,8 @@ export function toErrorBody(err: unknown, log: Logger, requestId: string) {
   if (err instanceof AppError) {
     return { code: err.code, message: err.userMessage ?? ERROR_MESSAGES[err.code], requestId };
   }
-  const code = err instanceof AuditWriteError ? "audit_write_failed" : err instanceof Error ? err.name : "unknown";
+  const code =
+    err instanceof AuditWriteError ? "audit_write_failed" : err instanceof Error ? err.name : "unknown";
   log.error({ event: "http.request.failed", status: 500, error: { code }, err }, "action failed");
   return { code: "INTERNAL" as const, message: ERROR_MESSAGES.INTERNAL, requestId };
 }

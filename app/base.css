@@ -1,0 +1,27 @@
+/* Shared by both areas: Tailwind and the token NAMES behind utilities (bg-acc, text-mut, …).
+   The token VALUES and every component rule live in app/(public)/public.css and
+   app/(internal)/internal.css, scoped by [data-area], so the two teams can restyle independently. */
+@import "tailwindcss";
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-floor: var(--floor);
+  --color-card: var(--card);
+  --color-card-hi: var(--card-hi);
+  --color-card-lo: var(--card-lo);
+  --color-line: var(--line);
+  --color-tx: var(--tx);
+  --color-mut: var(--mut);
+  --color-acc: var(--acc);
+  --color-acc-dk: var(--acc-dk);
+  --color-acc-lt: var(--acc-lt);
+  --color-acc-tint: var(--acc-tint);
+  --color-on-acc: var(--on-acc);
+  --color-internal: var(--internal);
+  --color-warn: var(--warn);
+  --color-warn-bg: var(--warn-bg);
+  --color-flag: var(--flag);
+  --font-pixel: var(--font-pixelify), monospace;
+  --font-mono: var(--font-plex-mono), ui-monospace, monospace;
+  --radius-*: initial;
+}

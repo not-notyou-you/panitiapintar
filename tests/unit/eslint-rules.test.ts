@@ -9,7 +9,12 @@ async function ruleIds(code: string, filePath: string): Promise<string[]> {
   return (result?.messages ?? []).map((m) => m.ruleId ?? "fatal");
 }
 
-const PUBLIC_PATHS = ["app/e/[slug]/page.tsx", "app/api/chat/public/route.ts"];
+const PUBLIC_PATHS = [
+  "app/(public)/e/[slug]/page.tsx",
+  "app/(public)/page.tsx",
+  "components/public/chat/ChatWindow.tsx",
+  "app/api/chat/public/route.ts",
+];
 
 describe("security lint rules", () => {
   it("rejects console.log anywhere", async () => {
@@ -53,5 +58,25 @@ describe("security lint rules", () => {
   it("still allows the service client in system code", async () => {
     const code = `import { serviceClient } from "@/lib/supabase/service";\nexport const c = serviceClient;\n`;
     expect(await ruleIds(code, "app/api/cron/retention/route.ts")).not.toContain("no-restricted-imports");
+  });
+
+  it.each([
+    ["app/(public)/page.tsx", "@/components/internal/ui/Window"],
+    ["components/public/landing/X.tsx", "@/components/internal/admin/AdminShell"],
+    ["app/(internal)/panitia/page.tsx", "@/components/public/ui/Window"],
+    ["components/internal/admin/X.tsx", "@/components/public/landing/SiteHeader"],
+  ])("area boundary: %s cannot import %s", async (file, spec) => {
+    const code = `import { X } from "${spec}";
+export const c = X;
+`;
+    expect(await ruleIds(code, file)).toContain("no-restricted-imports");
+  });
+
+  it("each area may import its own components and shared lib/", async () => {
+    const code = `import { Window } from "@/components/public/ui/Window";
+import { formatDate } from "@/lib/format";
+export const c = [Window, formatDate];
+`;
+    expect(await ruleIds(code, "app/(public)/page.tsx")).not.toContain("no-restricted-imports");
   });
 });

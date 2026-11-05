@@ -59,7 +59,10 @@ function logPii(log: Logger, stage: "input" | "history" | "output", found: PiiCo
   log.info({ event: "chat.pii.redacted", types, count, stage }, "pii redacted");
 }
 
-export async function handlePublicChat(input: PublicChatRequest, deps: PublicChatDeps): Promise<HandlerResult> {
+export async function handlePublicChat(
+  input: PublicChatRequest,
+  deps: PublicChatDeps,
+): Promise<HandlerResult> {
   const { log, requestId } = deps;
   const now = deps.now ?? (() => performance.now());
   const started = now();
@@ -81,7 +84,11 @@ export async function handlePublicChat(input: PublicChatRequest, deps: PublicCha
   if (!eventLimit.ok) return rateLimited(eventLimit, requestId);
 
   clog.debug(
-    { event: "chat.public.received", messageLength: input.message.length, historyTurns: input.history.length },
+    {
+      event: "chat.public.received",
+      messageLength: input.message.length,
+      historyTurns: input.history.length,
+    },
     "chat received",
   );
 
@@ -97,7 +104,12 @@ export async function handlePublicChat(input: PublicChatRequest, deps: PublicCha
   }
 
   // 5 + 7. Assembly redacts question, history and documents itself, then wraps them in delimiters.
-  const prompt = assembleChatPublicPrompt({ committee, docs, question: input.message, history: input.history });
+  const prompt = assembleChatPublicPrompt({
+    committee,
+    docs,
+    question: input.message,
+    history: input.history,
+  });
   logPii(clog, "input", prompt.pii.input);
   logPii(clog, "history", prompt.pii.history);
 
@@ -139,7 +151,10 @@ export async function handlePublicChat(input: PublicChatRequest, deps: PublicCha
     mergeCounts(piiTypes, out.found);
     const canary = findCanary(output.answer) ?? findCanary(out.text);
     if (canary) {
-      clog.fatal({ event: "security.canary.leaked", committeeId: committee.id, canaryId: canary }, "canary leaked");
+      clog.fatal(
+        { event: "security.canary.leaked", committeeId: committee.id, canaryId: canary },
+        "canary leaked",
+      );
       await deps.audit({
         action: "security.canary_leaked",
         actorId: null,

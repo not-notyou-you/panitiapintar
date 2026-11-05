@@ -30,7 +30,8 @@ export function geminiTransport(apiKey: string): AiTransport {
         });
         const finish = res.candidates?.[0]?.finishReason;
         const blockReason =
-          res.promptFeedback?.blockReason ?? (finish && BLOCK_FINISH_REASONS.has(finish) ? finish : undefined);
+          res.promptFeedback?.blockReason ??
+          (finish && BLOCK_FINISH_REASONS.has(finish) ? finish : undefined);
         return {
           text: res.text ?? "",
           inputTokens: res.usageMetadata?.promptTokenCount,

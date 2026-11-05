@@ -4,12 +4,7 @@ import type { Logger } from "pino";
 import { logger as rootLogger } from "./logger";
 import { REQUEST_ID_HEADER, isValidRequestId, newRequestId } from "./request-id";
 
-type Handler<C> = (
-  req: NextRequest,
-  log: Logger,
-  ctx: C,
-  requestId: string,
-) => Promise<Response> | Response;
+type Handler<C> = (req: NextRequest, log: Logger, ctx: C, requestId: string) => Promise<Response> | Response;
 
 /**
  * Wraps a route handler: binds requestId to the logger, records http.request.completed/failed,

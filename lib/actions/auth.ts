@@ -6,7 +6,8 @@ import { rateLimit, type RateLimitResult } from "@/lib/rate-limit";
 import { magicLinkSchema, safeNextPath } from "@/lib/validation/admin";
 import { toErrorBody, type ActionCtx, type ActionResult } from "./runtime";
 
-export const MAGIC_LINK_SENT = "Jika email terdaftar sebagai panitia, tautan masuk sudah dikirim. Periksa kotak masuk.";
+export const MAGIC_LINK_SENT =
+  "Jika email terdaftar sebagai panitia, tautan masuk sudah dikirim. Periksa kotak masuk.";
 
 export interface MagicLinkDeps {
   ipHash: string;

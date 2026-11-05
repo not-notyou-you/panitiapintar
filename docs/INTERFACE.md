@@ -325,3 +325,23 @@ Hanya dokumen `DISETUJUI` yang dipakai chatbot. Dropdown visibilitas nonaktif un
 | Label hasil generator | "DRAF AI · periksa sebelum dipakai" |
 | Placeholder input publik | "Tulis pertanyaan tentang acara ini…" |
 | Placeholder input panitia | "Tanya dokumen atau beri instruksi…" |
+
+## 9. Pembagian kerja UI: area publik dan internal
+
+UI dipisah menjadi dua area yang dikerjakan orang berbeda dan boleh bergaya sangat berbeda. Bagian lain dokumen ini (Retro Window) adalah gaya awal kedua area; masing-masing tim boleh menggantinya untuk areanya sendiri.
+
+| | Area publik | Area internal |
+|---|---|---|
+| URL | `/`, `/e/[slug]`, 404 umum, error global | `/login`, `/panitia/**`, `/admin/**` |
+| Halaman | `app/(public)/**`, `app/not-found.tsx`, `app/global-error.tsx` | `app/(internal)/**` |
+| Komponen | `components/public/**` | `components/internal/**` |
+| Gaya | `app/(public)/public.css` | `app/(internal)/internal.css` |
+
+Aturan:
+- **Gaya di-scope.** Layout tiap area membungkus halaman dengan `<div data-area="public|internal">`, dan setiap selector di CSS area diawali `[data-area="…"]` (latar halaman lewat `body:has(> [data-area="…"])`). Kedua file boleh termuat bersamaan setelah navigasi klien tanpa saling memengaruhi. Nama `@keyframes` diberi akhiran area. Aturan baru wajib ikut pola ini.
+- **Token.** `app/base.css` hanya mendeklarasikan *nama* token Tailwind (`bg-acc`, `text-mut`, `font-pixel`, …). *Nilainya* ditentukan di CSS tiap area, jadi satu tim bisa mengganti warna/font tanpa menyentuh area lain. Font tambahan dimuat di layout area masing-masing.
+- **Tidak ada impor silang.** ESLint menolak `components/public` ↔ `components/internal` dan `app/(public)` ↔ `app/(internal)` (`tests/unit/eslint-rules.test.ts`). Komponen yang dibutuhkan keduanya disalin, bukan dibagi.
+- **Logika tetap bersama di `lib/`.** Terutama `lib/chat/use-chat-session.ts` (riwayat, batas panjang, cek PII sebelum kirim, `requestId` saat error) dan `lib/http/request-id.client.ts`. Tampilan boleh diubah bebas; perilaku keamanan di hook ini tidak boleh diduplikasi atau dilewati.
+- **Teks yang dicek e2e** (mis. "Halaman tidak ditemukan", "Kamu bukan anggota kepanitiaan ini.", label tombol dan input di `tests/e2e/`) adalah kontrak: ubah test di PR yang sama bila teksnya diganti.
+- Larangan SEC-01 (service role) berlaku untuk seluruh `app/(public)/**` dan `components/public/**`.
+

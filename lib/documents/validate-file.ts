@@ -45,7 +45,8 @@ export function validateFile(name: string, declaredMime: string, bytes: Uint8Arr
   if (bytes.byteLength === 0) return { ok: false, reason: "corrupt" };
   if (bytes.byteLength > MAX_FILE_BYTES) return { ok: false, reason: "too_large" };
   const ext = extensionOf(name);
-  if (ext !== "pdf" && ext !== "docx" && ext !== "txt" && ext !== "md") return { ok: false, reason: "bad_type" };
+  if (ext !== "pdf" && ext !== "docx" && ext !== "txt" && ext !== "md")
+    return { ok: false, reason: "bad_type" };
   const kind: DocKind = ext;
   if (!ACCEPTED_DECLARED[kind].has(declaredMime.split(";")[0]?.trim().toLowerCase() ?? "")) {
     return { ok: false, reason: "bad_type" };
@@ -132,7 +133,10 @@ function inspectDocx(bytes: Uint8Array): { ok: true } | { ok: false; reason: Rej
     return { ok: false, reason: "macro" };
   }
   const total = entries.reduce((s, e) => s + e.uncompressed, 0);
-  const packed = Math.max(1, entries.reduce((s, e) => s + e.compressed, 0));
+  const packed = Math.max(
+    1,
+    entries.reduce((s, e) => s + e.compressed, 0),
+  );
   // 0xFFFFFFFF marks ZIP64 sizes; a .docx never needs them, so treat it as hostile.
   if (
     total > MAX_UNZIPPED_BYTES ||

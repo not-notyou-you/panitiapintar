@@ -24,7 +24,8 @@ async function guard<T>(route: string, fn: (g: GuardDeps) => Promise<T>): Promis
   try {
     return { ok: true, value: await fn(g), requestId: g.requestId };
   } catch (err) {
-    if (err instanceof AppError && err.code === "UNAUTHENTICATED") redirect(`/login?next=${encodeURIComponent(route)}`);
+    if (err instanceof AppError && err.code === "UNAUTHENTICATED")
+      redirect(`/login?next=${encodeURIComponent(route)}`);
     if (err instanceof AppError && err.code === "FORBIDDEN") return { ok: false, requestId: g.requestId };
     throw err;
   }

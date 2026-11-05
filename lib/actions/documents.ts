@@ -57,15 +57,20 @@ export async function latestReviewVersion(client: SupabaseClient, documentId: st
     .limit(1)
     .maybeSingle();
   if (error) throw dbError(error);
-  return data as
-    | { id: string; kind: string; content: string; pii_summary: Record<string, number>; created_at: string }
-    | null;
+  return data as {
+    id: string;
+    kind: string;
+    content: string;
+    pii_summary: Record<string, number>;
+    created_at: string;
+  } | null;
 }
 
 export function approveDocument(raw: unknown, ctx: ActionCtx) {
   return runAction("approveDocument", ctx, approveDocumentSchema, raw, async (input, g) => {
     const { doc, actor } = await adminOfDocument(input.documentId, ctx, g);
-    if (doc.status !== "needs_review") throw new AppError("INVALID_INPUT", "Dokumen tidak sedang menunggu tinjauan.");
+    if (doc.status !== "needs_review")
+      throw new AppError("INVALID_INPUT", "Dokumen tidak sedang menunggu tinjauan.");
     if (doc.version !== input.expectedVersion) throw new AppError("CONFLICT");
     const edited = input.editedContent !== undefined && input.editedContent.trim() !== "";
     let versionId: string;
@@ -107,7 +112,8 @@ export function rejectDocument(raw: unknown, ctx: ActionCtx) {
 export function editApprovedDocument(raw: unknown, ctx: ActionCtx) {
   return runAction("editApprovedDocument", ctx, editApprovedDocumentSchema, raw, async (input, g) => {
     const { doc, actor } = await adminOfDocument(input.documentId, ctx, g);
-    if (doc.status !== "approved") throw new AppError("INVALID_INPUT", "Hanya dokumen yang disetujui yang bisa diedit di sini.");
+    if (doc.status !== "approved")
+      throw new AppError("INVALID_INPUT", "Hanya dokumen yang disetujui yang bisa diedit di sini.");
     if (doc.version !== input.expectedVersion) throw new AppError("CONFLICT");
     const versionId = await insertAdminEdit(ctx.client, doc.id, actor.userId, input.content);
     const { data, error } = await ctx.client.rpc("reopen_document", {
@@ -132,14 +138,18 @@ export function setVisibility(raw: unknown, ctx: ActionCtx) {
     const { doc } = await adminOfDocument(input.documentId, ctx, g);
     if (input.visibility === "public") {
       // Checked here for a clear message; the RPC enforces both rules again (0005).
-      if (doc.status !== "approved") throw new AppError("INVALID_INPUT", "Setujui dokumen dulu sebelum dijadikan Publik.");
+      if (doc.status !== "approved")
+        throw new AppError("INVALID_INPUT", "Setujui dokumen dulu sebelum dijadikan Publik.");
       const { data: current } = await ctx.client
         .from("document_versions")
         .select("pii_summary")
         .eq("id", doc.current_version_id ?? "")
         .maybeSingle();
       if (!current || Object.keys((current.pii_summary as Record<string, number>) ?? {}).length > 0) {
-        throw new AppError("INVALID_INPUT", "Masih ada data pribadi di versi ini. Redaksi dulu sebelum dijadikan Publik.");
+        throw new AppError(
+          "INVALID_INPUT",
+          "Masih ada data pribadi di versi ini. Redaksi dulu sebelum dijadikan Publik.",
+        );
       }
     }
     const { data, error } = await ctx.client.rpc("set_document_visibility", {
@@ -150,7 +160,12 @@ export function setVisibility(raw: unknown, ctx: ActionCtx) {
     });
     if (error) throw dbError(error);
     ctx.log.info(
-      { event: "document.visibility.changed", documentId: doc.id, from: doc.visibility, to: input.visibility },
+      {
+        event: "document.visibility.changed",
+        documentId: doc.id,
+        from: doc.visibility,
+        to: input.visibility,
+      },
       "visibility changed",
     );
     return { version: data as number };

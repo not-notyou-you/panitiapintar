@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { IBM_Plex_Mono, Pixelify_Sans } from "next/font/google";
 import { currentRequestId } from "@/lib/http/request-id.server";
-import "./globals.css";
+import "./base.css";
 
 const pixelify = Pixelify_Sans({ subsets: ["latin"], variable: "--font-pixelify" });
 const plexMono = IBM_Plex_Mono({ subsets: ["latin"], weight: ["400", "600"], variable: "--font-plex-mono" });

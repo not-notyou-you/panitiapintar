@@ -4,7 +4,10 @@ import { captureLogger } from "../helpers/capture-logger";
 
 describe("dbError → security.rls.denied", () => {
   it("42501 becomes FORBIDDEN and is logged as security.rls.denied", () => {
-    const err = dbError({ code: "42501", message: "permission denied for table documents" }, "documents.update");
+    const err = dbError(
+      { code: "42501", message: "permission denied for table documents" },
+      "documents.update",
+    );
     expect(err).toBeInstanceOf(DbDeniedError);
     const { log, json } = captureLogger();
     const body = toErrorBody(err, log, "req_01JD3Q8Z7K2M0000000000000A");

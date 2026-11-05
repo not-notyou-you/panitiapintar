@@ -7,7 +7,12 @@ import { dbError, runAction, type ActionCtx } from "./runtime";
 // F1 / FR-A1. Super admin creates and archives; committee admins may edit the descriptive fields.
 // slug is fixed after creation (printed on QR codes); status changes only via archive_committee().
 
-const FIELD_NAMES = { name: "name", eventDate: "event_date", location: "location", contactPublic: "contact_public" };
+const FIELD_NAMES = {
+  name: "name",
+  eventDate: "event_date",
+  location: "location",
+  contactPublic: "contact_public",
+};
 
 export function createCommittee(raw: unknown, ctx: ActionCtx) {
   return runAction("createCommittee", ctx, createCommitteeSchema, raw, async (input, g) => {

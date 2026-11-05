@@ -84,10 +84,12 @@ export function createAiClient(deps: AiClientDeps) {
         }),
         timeout,
       ]);
-      if (res === "timeout") return { status: "timeout", timeoutMs: limitMs, errorCode: "timeout", retryable: true };
+      if (res === "timeout")
+        return { status: "timeout", timeoutMs: limitMs, errorCode: "timeout", retryable: true };
       return classifyResponse(res, input.parse);
     } catch (err) {
-      if (controller.signal.aborted) return { status: "timeout", timeoutMs: limitMs, errorCode: "timeout", retryable: true };
+      if (controller.signal.aborted)
+        return { status: "timeout", timeoutMs: limitMs, errorCode: "timeout", retryable: true };
       if (err instanceof AiTransportError) {
         if (err.httpStatus === 429) return { status: "rate_limited", errorCode: "http_429" };
         const retryable = err.httpStatus === undefined || err.httpStatus >= 500;
@@ -101,14 +103,22 @@ export function createAiClient(deps: AiClientDeps) {
 
   async function generate<T>(input: GenerateInput<T>): Promise<GenerateResult<T>> {
     const primary = input.role === "chat" ? deps.models.chat : deps.models.refine;
-    const models = deps.models.fallback && deps.models.fallback !== primary ? [primary, deps.models.fallback] : [primary];
-    const promptSha256 = createHash("sha256").update(input.system).update("\0").update(input.prompt).digest("hex");
+    const models =
+      deps.models.fallback && deps.models.fallback !== primary ? [primary, deps.models.fallback] : [primary];
+    const promptSha256 = createHash("sha256")
+      .update(input.system)
+      .update("\0")
+      .update(input.prompt)
+      .digest("hex");
     let last: GenerateResult<T> = { status: "error", model: primary, fallbackUsed: false };
 
     for (const [i, model] of models.entries()) {
       const fallbackUsed = i > 0;
       if (fallbackUsed) {
-        input.log.warn({ event: "ai.call.fallback", fromModel: models[i - 1], toModel: model }, "ai fallback");
+        input.log.warn(
+          { event: "ai.call.fallback", fromModel: models[i - 1], toModel: model },
+          "ai fallback",
+        );
       }
       for (let n = 1; n <= 2; n++) {
         const outcome = await withAiLogging(
@@ -141,12 +151,21 @@ export function createAiClient(deps: AiClientDeps) {
   return { generate };
 }
 
-function classifyResponse<T>(res: TransportResponse, parse: (text: string) => ParseResult<T>): AttemptOutcome<T> {
+function classifyResponse<T>(
+  res: TransportResponse,
+  parse: (text: string) => ParseResult<T>,
+): AttemptOutcome<T> {
   const tokens = { inputTokens: res.inputTokens, outputTokens: res.outputTokens };
-  if (res.blockReason) return { status: "blocked", blockReason: res.blockReason, errorCode: "blocked", ...tokens };
+  if (res.blockReason)
+    return { status: "blocked", blockReason: res.blockReason, errorCode: "blocked", ...tokens };
   const parsed = parse(res.text);
   if (!parsed.ok) {
-    return { status: "invalid_output", errorCode: "invalid_output", validationErrors: parsed.paths, ...tokens };
+    return {
+      status: "invalid_output",
+      errorCode: "invalid_output",
+      validationErrors: parsed.paths,
+      ...tokens,
+    };
   }
   return { status: "ok", value: parsed.value, ...tokens };
 }

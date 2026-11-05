@@ -22,7 +22,8 @@ async function extractRaw(kind: DocKind, bytes: Uint8Array): Promise<string> {
         const { text } = await extractText(pdf, { mergePages: true });
         return Array.isArray(text) ? text.join("\n") : text;
       } catch (err) {
-        if (err instanceof Error && /password/i.test(err.name + err.message)) throw new ExtractError("encrypted");
+        if (err instanceof Error && /password/i.test(err.name + err.message))
+          throw new ExtractError("encrypted");
         throw new ExtractError("corrupt");
       }
     }

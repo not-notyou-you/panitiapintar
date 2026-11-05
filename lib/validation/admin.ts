@@ -34,10 +34,18 @@ export const createCommitteeSchema = z.object({
   contactPublic: z.string().trim().min(1).max(200),
 });
 
-export const updateCommitteeSchema = createCommitteeSchema.omit({ slug: true }).extend({ committeeId: uuidSchema });
+export const updateCommitteeSchema = createCommitteeSchema
+  .omit({ slug: true })
+  .extend({ committeeId: uuidSchema });
 export const archiveCommitteeSchema = z.object({ committeeId: uuidSchema });
 
-export const REJECT_REASONS = ["tidak_akurat", "tidak_relevan", "data_pribadi", "duplikat", "lainnya"] as const;
+export const REJECT_REASONS = [
+  "tidak_akurat",
+  "tidak_relevan",
+  "data_pribadi",
+  "duplikat",
+  "lainnya",
+] as const;
 
 export const approveDocumentSchema = z.object({
   documentId: uuidSchema,
@@ -62,7 +70,11 @@ export const setVisibilitySchema = z.object({
 export const deleteDocumentSchema = z.object({ documentId: uuidSchema });
 
 export const memberRoleSchema = z.enum(["admin", "member"]);
-export const inviteMemberSchema = z.object({ committeeId: uuidSchema, email: emailSchema, role: memberRoleSchema });
+export const inviteMemberSchema = z.object({
+  committeeId: uuidSchema,
+  email: emailSchema,
+  role: memberRoleSchema,
+});
 export const changeMemberRoleSchema = z.object({
   committeeId: uuidSchema,
   userId: uuidSchema,
@@ -79,7 +91,10 @@ export const uploadFieldsSchema = z.object({
 
 export const qrQuerySchema = z.object({
   format: z.enum(["png", "svg"]).default("png"),
-  size: z.coerce.number().pipe(z.union([z.literal(512), z.literal(1024)])).default(512),
+  size: z.coerce
+    .number()
+    .pipe(z.union([z.literal(512), z.literal(1024)]))
+    .default(512),
 });
 
 /** Only same-site paths into the logged-in areas; anything else falls back (no open redirect). */

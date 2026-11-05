@@ -84,7 +84,10 @@ export async function refineDocument(documentId: string, deps: PipelineDeps): Pr
     });
 
     if (result.status !== "ok") {
-      log.error({ event: "document.refine.failed", documentId, error: { code: result.status } }, "refine failed");
+      log.error(
+        { event: "document.refine.failed", documentId, error: { code: result.status } },
+        "refine failed",
+      );
       const reason = result.status === "invalid_output" ? "ai_invalid_output" : "ai_unavailable";
       await transition(svc, doc, { status: "refine_failed", status_reason: reason });
       return "refine_failed";
@@ -111,7 +114,11 @@ export async function refineDocument(documentId: string, deps: PipelineDeps): Pr
     return "needs_review";
   } catch (err) {
     log.error(
-      { event: "document.refine.failed", documentId, error: { code: err instanceof Error ? err.name : "unknown" } },
+      {
+        event: "document.refine.failed",
+        documentId,
+        error: { code: err instanceof Error ? err.name : "unknown" },
+      },
       "refine crashed",
     );
     await transition(svc, doc, { status: "refine_failed", status_reason: "internal" }).catch(() => false);

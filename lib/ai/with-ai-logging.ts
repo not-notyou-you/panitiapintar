@@ -94,7 +94,11 @@ export async function withAiLogging<T extends AiCallOutcome>(
       break;
     case "invalid_output":
       log.error(
-        { event: "ai.output.invalid", purpose: meta.purpose, validationErrors: outcome.validationErrors ?? [] },
+        {
+          event: "ai.output.invalid",
+          purpose: meta.purpose,
+          validationErrors: outcome.validationErrors ?? [],
+        },
         "ai output invalid",
       );
       break;

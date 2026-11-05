@@ -1,0 +1,467 @@
+/* Internal area (/login, /panitia, /admin) styles. Every selector is scoped to [data-area="internal"] (set in this route group's
+   layout), so nothing here can affect the other area even when both stylesheets are loaded after a
+   client-side navigation. Token values below feed the shared utilities declared in app/base.css. */
+
+/* Design tokens: docs/INTERFACE.md §2 */
+
+body:has(> [data-area="internal"]) {
+  --bg: #e4e4e4;
+  --floor: #c9c9c9;
+  --card: #f2f2f2;
+  --card-hi: #fafafa;
+  --card-lo: #c4c4c4;
+  --line: #2b2b2b;
+  --tx: #2b2b2b;
+  --mut: #5f5f5f;
+  --acc: #005795;
+  --acc-dk: #003a63;
+  --acc-lt: #3d82b8;
+  --acc-tint: #dce8f2;
+  --on-acc: #f2f2f2;
+  --internal: #2b2b2b;
+  --warn: #a11d2b;
+  --warn-bg: #f6dfe2;
+  --flag: #e8b400;
+}
+
+[data-area="internal"],
+[data-area="internal"] * {
+  border-radius: 0;
+}
+
+body:has(> [data-area="internal"]) {
+  margin: 0;
+  min-height: 100dvh;
+  background: linear-gradient(to bottom, var(--bg) 0 72%, var(--floor) 72%);
+  color: var(--tx);
+  font-family: var(--font-mono);
+  font-size: 14px;
+}
+
+/* Pixel mountain on the floor (INTERFACE §2 "Bentuk dan kedalaman"). */
+
+body:has(> [data-area="internal"])::before {
+  content: "";
+  position: fixed;
+  right: 6%;
+  top: 72%;
+  width: 240px;
+  height: 64px;
+  margin-top: -64px;
+  background: var(--acc);
+  clip-path: polygon(0 100%, 18% 35%, 34% 62%, 55% 0, 76% 48%, 100% 100%);
+  opacity: 0.45;
+  z-index: -1;
+  pointer-events: none;
+}
+
+[data-area="internal"] h1,
+[data-area="internal"] h2,
+[data-area="internal"] h3,
+[data-area="internal"] button,
+[data-area="internal"] .font-pixel {
+  font-family: var(--font-pixel);
+}
+
+[data-area="internal"] :focus-visible {
+  outline: 3px solid var(--acc);
+  outline-offset: 2px;
+}
+
+/* ---- Window ---- */
+
+[data-area="internal"] .win {
+  position: relative;
+  border: 4px solid var(--line);
+  background: var(--card);
+  padding: 42px 16px 16px;
+  box-shadow:
+    inset -4px -4px 0 var(--card-lo),
+    inset 4px 4px 0 var(--card-hi),
+    6px 6px 0 var(--line);
+}
+
+[data-area="internal"] .win-title {
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 34px 0 10px;
+  background: var(--acc);
+  color: var(--on-acc);
+  border-bottom: 4px solid var(--line);
+  font-family: var(--font-pixel);
+  font-size: 13px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+[data-area="internal"] .win-x {
+  position: absolute;
+  right: 6px;
+  top: 3px;
+  width: 18px;
+  height: 18px;
+  background: var(--card);
+  border: 2px solid var(--line);
+  color: var(--line);
+  font-size: 12px;
+  line-height: 13px;
+  text-align: center;
+}
+
+[data-area="internal"] .diamond {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  flex: none;
+  background: currentColor;
+  transform: rotate(45deg);
+}
+
+/* ---- Buttons ---- */
+
+[data-area="internal"] .btn {
+  min-height: 44px;
+  padding: 8px 14px;
+  border: 4px solid var(--line);
+  background: var(--acc);
+  color: var(--on-acc);
+  font-size: 13px;
+  text-transform: uppercase;
+  cursor: pointer;
+  box-shadow:
+    inset -4px -4px 0 var(--acc-dk),
+    inset 4px 4px 0 var(--acc-lt);
+}
+
+[data-area="internal"] .btn:active {
+  box-shadow: inset 4px 4px 0 var(--acc-dk);
+}
+
+[data-area="internal"] .btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+[data-area="internal"] .btn-ghost {
+  background: var(--card-hi);
+  color: var(--tx);
+  box-shadow:
+    inset -4px -4px 0 var(--card-lo),
+    inset 4px 4px 0 #fff;
+}
+
+[data-area="internal"] .btn-ghost:active {
+  box-shadow: inset 4px 4px 0 var(--card-lo);
+}
+
+[data-area="internal"] .btn-danger {
+  background: var(--warn);
+  color: var(--on-acc);
+  box-shadow: none;
+}
+
+/* ---- Chat ---- */
+
+[data-area="internal"] .notice {
+  display: flex;
+  gap: 8px;
+  padding: 8px 10px;
+  border: 3px solid var(--line);
+  background: var(--acc-tint);
+  font-size: 12px;
+}
+
+[data-area="internal"] .notice::before {
+  content: "";
+  width: 10px;
+  height: 10px;
+  flex: none;
+  margin-top: 3px;
+  background: var(--acc);
+  border: 2px solid var(--line);
+}
+
+[data-area="internal"] .chip {
+  min-height: 44px;
+  padding: 6px 10px;
+  border: 3px solid var(--line);
+  background: var(--card-hi);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  text-align: left;
+  cursor: pointer;
+  box-shadow: 3px 3px 0 var(--line);
+}
+
+[data-area="internal"] .chip:hover {
+  background: var(--acc-tint);
+}
+
+[data-area="internal"] .msg {
+  max-width: 88%;
+  padding: 9px 11px;
+  border: 3px solid var(--line);
+  font-size: 13px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+[data-area="internal"] .msg-user {
+  align-self: flex-end;
+  background: var(--acc);
+  color: var(--on-acc);
+  box-shadow:
+    inset -3px -3px 0 var(--acc-dk),
+    inset 3px 3px 0 var(--acc-lt);
+}
+
+[data-area="internal"] .msg-bot {
+  align-self: flex-start;
+  background: var(--card-hi);
+  box-shadow: 4px 4px 0 var(--line);
+}
+
+[data-area="internal"] .msg-error {
+  align-self: flex-start;
+  background: var(--warn-bg);
+  color: var(--warn);
+  border-color: var(--warn);
+  box-shadow: 4px 4px 0 var(--warn);
+}
+
+[data-area="internal"] .msg p {
+  margin: 0;
+}
+
+[data-area="internal"] .msg p + p,
+[data-area="internal"] .msg ul,
+[data-area="internal"] .msg ol {
+  margin: 6px 0 0;
+  padding-left: 18px;
+}
+
+[data-area="internal"] .msg a {
+  color: var(--acc);
+  text-decoration: underline;
+}
+
+[data-area="internal"] .src {
+  display: block;
+  margin-top: 6px;
+  font-size: 11px;
+  color: var(--mut);
+}
+
+[data-area="internal"] .src-label {
+  margin-right: 6px;
+  font-family: var(--font-pixel);
+  color: var(--acc);
+}
+
+[data-area="internal"] .typing {
+  display: flex;
+  gap: 5px;
+  padding: 4px 0;
+}
+
+[data-area="internal"] .typing i {
+  width: 8px;
+  height: 8px;
+  background: var(--line);
+  animation: typing-internal 1.2s steps(1) infinite;
+}
+
+[data-area="internal"] .typing i:nth-child(2) {
+  animation-delay: 0.4s;
+}
+
+[data-area="internal"] .typing i:nth-child(3) {
+  animation-delay: 0.8s;
+}
+
+@keyframes typing-internal {
+  50% {
+    background: var(--card-lo);
+  }
+}
+
+[data-area="internal"] .pii {
+  padding: 8px;
+  border: 3px solid var(--warn);
+  background: var(--warn-bg);
+  color: var(--warn);
+  font-size: 12px;
+}
+
+[data-area="internal"] .field {
+  flex: 1;
+  min-width: 0;
+  min-height: 44px;
+  padding: 10px;
+  border: 3px solid var(--line);
+  background: #fff;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  box-shadow: inset 3px 3px 0 var(--card-lo);
+}
+
+[data-area="internal"] .field:focus {
+  outline: 3px solid var(--acc);
+  outline-offset: 2px;
+}
+
+[data-area="internal"] .status-dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  background: var(--acc);
+  border: 2px solid var(--line);
+  animation: blink-internal 1s steps(2) infinite;
+}
+
+@keyframes blink-internal {
+  50% {
+    background: var(--card);
+  }
+}
+
+/* ---- Admin (INTERFACE §4.4–4.8, §5) ---- */
+
+[data-area="internal"] .badge {
+  display: inline-block;
+  padding: 1px 6px;
+  border: 2px solid var(--line);
+  font-family: var(--font-pixel);
+  font-size: 11px;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+[data-area="internal"] .badge-public {
+  background: var(--acc);
+  color: var(--on-acc);
+}
+
+[data-area="internal"] .badge-internal {
+  background: var(--internal);
+  color: var(--on-acc);
+}
+
+[data-area="internal"] .badge-review {
+  background: var(--acc-tint);
+}
+
+[data-area="internal"] .badge-failed {
+  border-color: var(--warn);
+  color: var(--warn);
+  background: var(--warn-bg);
+}
+
+[data-area="internal"] .badge-outline {
+  background: transparent;
+  border-style: dashed;
+}
+
+[data-area="internal"] .tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  border-bottom: 3px solid var(--line);
+}
+
+[data-area="internal"] .tab {
+  min-height: 44px;
+  padding: 10px 12px;
+  font-family: var(--font-pixel);
+  font-size: 13px;
+  text-transform: uppercase;
+  color: var(--tx);
+  text-decoration: none;
+}
+
+[data-area="internal"] .tab[aria-current="page"] {
+  background: var(--acc);
+  color: var(--on-acc);
+}
+
+[data-area="internal"] .table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+[data-area="internal"] .table th {
+  text-align: left;
+  font-family: var(--font-pixel);
+  font-weight: normal;
+  text-transform: uppercase;
+  padding: 6px;
+  border-bottom: 3px solid var(--line);
+}
+
+[data-area="internal"] .table td {
+  padding: 8px 6px;
+  border-bottom: 1px solid var(--card-lo);
+  vertical-align: middle;
+}
+
+[data-area="internal"] .label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 12px;
+}
+
+[data-area="internal"] .dialog {
+  max-width: 420px;
+  width: calc(100% - 32px);
+  padding: 0;
+  border: 4px solid var(--line);
+  background: var(--card);
+  box-shadow: 8px 8px 0 var(--line);
+}
+
+[data-area="internal"] .dialog::backdrop {
+  background: rgb(43 43 43 / 0.5);
+}
+
+[data-area="internal"] .flagged {
+  border-left: 6px solid var(--flag);
+  padding-left: 8px;
+}
+
+[data-area="internal"] .flag-box {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  background: var(--flag);
+  border: 2px solid var(--line);
+}
+
+[data-area="internal"] .pane {
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-size: 12px;
+  max-height: 60vh;
+  overflow: auto;
+}
+
+[data-area="internal"] :focus-visible {
+  outline: 3px solid var(--acc);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-area="internal"],
+  [data-area="internal"] *,
+  [data-area="internal"] *::before,
+  [data-area="internal"] *::after {
+    animation: none !important;
+  }
+}

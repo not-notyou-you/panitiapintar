@@ -22,8 +22,7 @@ export const RATE_LIMITS = {
 export type RateLimitBucket = keyof typeof RATE_LIMITS;
 
 export type RateLimitResult =
-  | { ok: true }
-  | { ok: false; retryAfterSeconds: number; limit: number; window: string };
+  { ok: true } | { ok: false; retryAfterSeconds: number; limit: number; window: string };
 
 /** Atomically counts one hit; true while still within `max`. */
 export type HitFn = (bucket: string, windowSeconds: number, max: number) => Promise<boolean>;
@@ -65,7 +64,12 @@ export async function rateLimit(
         { event: "ratelimit.exceeded", bucket: `${bucket}:${w.name}`, limit: w.max },
         "rate limit exceeded",
       );
-      return { ok: false, retryAfterSeconds: Math.max(1, w.windowSeconds - elapsed), limit: w.max, window: w.name };
+      return {
+        ok: false,
+        retryAfterSeconds: Math.max(1, w.windowSeconds - elapsed),
+        limit: w.max,
+        window: w.name,
+      };
     }
   }
   return { ok: true };

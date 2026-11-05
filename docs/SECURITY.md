@@ -35,7 +35,7 @@ Model ancaman, kontrol keamanan, dan aturan implementasi. Setiap kontrol punya I
 ### SEC-01 · Isolasi struktural mode publik
 - Jalur publik **hanya** memanggil RPC `public_context(slug)` yang memfilter `approved AND public` di database.
 - Tabel `documents` dan `document_versions` **tidak punya policy untuk `anon`**.
-- Route publik **tidak boleh** mengimpor klien service role. Aturan ini ditegakkan oleh ESLint `no-restricted-imports` untuk `app/api/chat/public/**` dan `app/e/**`.
+- Route publik **tidak boleh** mengimpor klien service role. Aturan ini ditegakkan oleh ESLint `no-restricted-imports` untuk `app/api/chat/public/**`, seluruh area publik `app/(public)/**`, dan `components/public/**`.
 - `lib/context/public.ts` (pembaca konteks publik) memakai klien **anon** dan juga dilarang mengimpor klien service role (ESLint).
 - Penulisan metadata oleh sistem di jalur publik (`rate_limit_hit`, `ai_calls`, `chat_logs`, `audit_logs`) memakai service role lewat modul `lib/` (`lib/rate-limit`, `lib/ai/with-ai-logging.ts`, `lib/chat/chat-log.ts`, `lib/log/audit.ts`), bukan dari route. Modul ini hanya **menulis** teks teredaksi/metadata; tidak ada yang membaca dokumen.
 - Konsekuensi: walau prompt injection berhasil "membujuk" model, dokumen internal **tidak ada di konteks**, jadi tidak ada yang bisa dibocorkan.
