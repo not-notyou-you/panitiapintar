@@ -1,0 +1,72 @@
+@import "tailwindcss";
+
+/* Design tokens: docs/INTERFACE.md §2 */
+:root {
+  --bg: #e4e4e4;
+  --floor: #c9c9c9;
+  --card: #f2f2f2;
+  --card-hi: #fafafa;
+  --card-lo: #c4c4c4;
+  --line: #2b2b2b;
+  --tx: #2b2b2b;
+  --mut: #5f5f5f;
+  --acc: #005795;
+  --acc-dk: #003a63;
+  --acc-lt: #3d82b8;
+  --acc-tint: #dce8f2;
+  --on-acc: #f2f2f2;
+  --internal: #2b2b2b;
+  --warn: #a11d2b;
+  --warn-bg: #f6dfe2;
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-floor: var(--floor);
+  --color-card: var(--card);
+  --color-card-hi: var(--card-hi);
+  --color-card-lo: var(--card-lo);
+  --color-line: var(--line);
+  --color-tx: var(--tx);
+  --color-mut: var(--mut);
+  --color-acc: var(--acc);
+  --color-acc-dk: var(--acc-dk);
+  --color-acc-lt: var(--acc-lt);
+  --color-acc-tint: var(--acc-tint);
+  --color-on-acc: var(--on-acc);
+  --color-internal: var(--internal);
+  --color-warn: var(--warn);
+  --color-warn-bg: var(--warn-bg);
+  --font-pixel: var(--font-pixelify), monospace;
+  --font-mono: var(--font-plex-mono), ui-monospace, monospace;
+  --radius-*: initial;
+}
+
+* {
+  border-radius: 0;
+}
+
+body {
+  min-height: 100dvh;
+  background: linear-gradient(to bottom, var(--bg) 70%, var(--floor) 70%);
+  color: var(--tx);
+  font-family: var(--font-mono);
+}
+
+.win {
+  border: 4px solid var(--line);
+  background: var(--card);
+  box-shadow:
+    inset -4px -4px 0 var(--card-lo),
+    inset 4px 4px 0 var(--card-hi),
+    6px 6px 0 var(--line);
+}
+
+.win-title {
+  height: 28px;
+  background: var(--acc);
+  color: var(--on-acc);
+  border-bottom: 4px solid var(--line);
+  font-family: var(--font-pixel);
+  text-transform: uppercase;
+}

@@ -1,0 +1,6 @@
+node_modules
+.next
+panitiapintar-docs
+docs
+supabase/seed
+package-lock.json

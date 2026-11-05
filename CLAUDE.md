@@ -5,6 +5,7 @@ File ini dibaca otomatis oleh Claude Code di setiap sesi. Ikuti aturan di sini d
 ## Proyek
 
 **PanitiaPintar**: platform chatbot berbasis dokumen untuk banyak kepanitiaan acara kampus.
+
 - **Mode Publik** (`/e/[slug]`): pengunjung tanpa login bertanya; jawaban hanya dari dokumen **Publik + Approved** acara tersebut.
 - **Mode Panitia** (`/panitia/[id]`): anggota panitia login; tanya dokumen publik + internal, buat rundown/checklist.
 - **Admin** (`/admin`): kelola kepanitiaan, unggah dokumen (dirapikan otomatis oleh AI, lalu ditinjau manusia), atur Publik/Internal, lihat log.
@@ -13,17 +14,17 @@ Final project mata kuliah AI706 (UMN). Semua layanan memakai **tier gratis**.
 
 ## Bacaan wajib sebelum mengubah kode
 
-| Mengerjakan | Baca dulu |
-|---|---|
-| Fitur apa pun | [`docs/PRD.md`](docs/PRD.md) |
-| Struktur kode, alur request | [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) |
-| Tabel, migrasi, RLS | [`docs/DATABASE.md`](docs/DATABASE.md) |
-| Auth, input, AI, file, header | [`docs/SECURITY.md`](docs/SECURITY.md) |
-| Log apa pun | [`docs/LOGGING.md`](docs/LOGGING.md) |
-| Route handler / server action | [`docs/API.md`](docs/API.md) |
-| UI | [`docs/INTERFACE.md`](docs/INTERFACE.md) |
-| Test | [`docs/TESTING.md`](docs/TESTING.md) |
-| Urutan pengerjaan | [`docs/ROADMAP.md`](docs/ROADMAP.md) |
+| Mengerjakan                   | Baca dulu                                      |
+| ----------------------------- | ---------------------------------------------- |
+| Fitur apa pun                 | [`docs/PRD.md`](docs/PRD.md)                   |
+| Struktur kode, alur request   | [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) |
+| Tabel, migrasi, RLS           | [`docs/DATABASE.md`](docs/DATABASE.md)         |
+| Auth, input, AI, file, header | [`docs/SECURITY.md`](docs/SECURITY.md)         |
+| Log apa pun                   | [`docs/LOGGING.md`](docs/LOGGING.md)           |
+| Route handler / server action | [`docs/API.md`](docs/API.md)                   |
+| UI                            | [`docs/INTERFACE.md`](docs/INTERFACE.md)       |
+| Test                          | [`docs/TESTING.md`](docs/TESTING.md)           |
+| Urutan pengerjaan             | [`docs/ROADMAP.md`](docs/ROADMAP.md)           |
 
 ## Stack
 

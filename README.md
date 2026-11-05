@@ -2,7 +2,7 @@
 
 Platform chatbot berbasis dokumen untuk banyak kepanitiaan acara kampus.
 
-- **Mode Publik:** pengunjung memindai QR, lalu bertanya tanpa login. Jawaban hanya dari dokumen yang panitia tandai *Publik* dan sudah disetujui.
+- **Mode Publik:** pengunjung memindai QR, lalu bertanya tanpa login. Jawaban hanya dari dokumen yang panitia tandai _Publik_ dan sudah disetujui.
 - **Mode Panitia:** panitia login untuk bertanya tentang dokumen internal (anggaran, notulensi) dan membuat draf rundown serta checklist.
 - **Admin:** unggah dokumen, yang dirapikan otomatis oleh AI lalu **ditinjau manusia** sebelum dipakai.
 
@@ -10,29 +10,29 @@ Platform chatbot berbasis dokumen untuk banyak kepanitiaan acara kampus.
 
 ## Dokumentasi
 
-| Dokumen | Isi |
-|---|---|
-| [CLAUDE.md](CLAUDE.md) | Instruksi dan aturan wajib untuk Claude Code |
-| [docs/PRD.md](docs/PRD.md) | Kebutuhan produk, ruang lingkup, target evaluasi |
+| Dokumen                                      | Isi                                                                |
+| -------------------------------------------- | ------------------------------------------------------------------ |
+| [CLAUDE.md](CLAUDE.md)                       | Instruksi dan aturan wajib untuk Claude Code                       |
+| [docs/PRD.md](docs/PRD.md)                   | Kebutuhan produk, ruang lingkup, target evaluasi                   |
 | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Komponen, struktur folder, alur request, siklus dokumen, keandalan |
-| [docs/DATABASE.md](docs/DATABASE.md) | Skema, fungsi, Row Level Security, retensi |
-| [docs/SECURITY.md](docs/SECURITY.md) | Model ancaman dan kontrol SEC-01…SEC-13 |
-| [docs/LOGGING.md](docs/LOGGING.md) | Jenis log, format, katalog event dan audit, retensi |
-| [docs/API.md](docs/API.md) | Kontrak endpoint, kode error, kontrak prompt |
-| [docs/INTERFACE.md](docs/INTERFACE.md) | Sistem visual, peta halaman, wireframe, komponen |
-| [docs/TESTING.md](docs/TESTING.md) | Strategi test, test keamanan wajib, evaluasi AI |
-| [docs/ROADMAP.md](docs/ROADMAP.md) | Urutan pengerjaan per fase |
-| [docs/PROMPTS.md](docs/PROMPTS.md) | Prompt 4 tahap untuk Claude Code + prompt dokumen dummy ChatGPT |
-| [docs/ui-preview.html](docs/ui-preview.html) | Acuan visual "Retro Window" navy |
+| [docs/DATABASE.md](docs/DATABASE.md)         | Skema, fungsi, Row Level Security, retensi                         |
+| [docs/SECURITY.md](docs/SECURITY.md)         | Model ancaman dan kontrol SEC-01…SEC-13                            |
+| [docs/LOGGING.md](docs/LOGGING.md)           | Jenis log, format, katalog event dan audit, retensi                |
+| [docs/API.md](docs/API.md)                   | Kontrak endpoint, kode error, kontrak prompt                       |
+| [docs/INTERFACE.md](docs/INTERFACE.md)       | Sistem visual, peta halaman, wireframe, komponen                   |
+| [docs/TESTING.md](docs/TESTING.md)           | Strategi test, test keamanan wajib, evaluasi AI                    |
+| [docs/ROADMAP.md](docs/ROADMAP.md)           | Urutan pengerjaan per fase                                         |
+| [docs/PROMPTS.md](docs/PROMPTS.md)           | Prompt 4 tahap untuk Claude Code + prompt dokumen dummy ChatGPT    |
+| [docs/ui-preview.html](docs/ui-preview.html) | Acuan visual "Retro Window" navy                                   |
 
 ## Tool AI
 
-| Tool | Kapan | Tugas |
-|---|---|---|
-| Claude Code | Pengembangan | Asisten coding |
-| ChatGPT | Pengembangan | Dokumen dummy 3 acara fiktif + bank pertanyaan uji |
-| Gemini, model REFINE (Flash) | Di aplikasi | Merapikan dokumen saat diunggah |
-| Gemini, model CHAT (Flash-Lite) | Di aplikasi | Chatbot dan generator rundown/checklist |
+| Tool                            | Kapan        | Tugas                                              |
+| ------------------------------- | ------------ | -------------------------------------------------- |
+| Claude Code                     | Pengembangan | Asisten coding                                     |
+| ChatGPT                         | Pengembangan | Dokumen dummy 3 acara fiktif + bank pertanyaan uji |
+| Gemini, model REFINE (Flash)    | Di aplikasi  | Merapikan dokumen saat diunggah                    |
+| Gemini, model CHAT (Flash-Lite) | Di aplikasi  | Chatbot dan generator rundown/checklist            |
 
 ## Teknologi
 
@@ -55,21 +55,21 @@ Akun seed (email `@contoh.test`) masuk lewat magic link yang muncul di Inbucket 
 
 ### Variabel lingkungan
 
-| Variabel | Wajib | Keterangan |
-|---|---|---|
-| `APP_URL` | Ya | URL publik aplikasi; dipakai untuk QR dan cek `Origin` |
-| `APP_ENV` | Ya | `development` / `preview` / `production` |
-| `NEXT_PUBLIC_SUPABASE_URL` | Ya | URL proyek Supabase |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Ya | Anon key (aman di browser, dibatasi RLS) |
-| `SUPABASE_SERVICE_ROLE_KEY` | Ya | **Server saja.** Untuk audit log dan job sistem |
-| `GEMINI_API_KEY` | Ya | **Server saja.** Dari Google AI Studio |
-| `GEMINI_MODEL_REFINE` | Ya | Model keluarga Flash untuk perapihan |
-| `GEMINI_MODEL_CHAT` | Ya | Model keluarga Flash-Lite untuk chatbot |
-| `GEMINI_MODEL_FALLBACK` | Ya | Model cadangan bila model utama gagal |
-| `IP_HASH_SALT` | Ya | String acak ≥ 32 karakter; dirotasi bulanan |
-| `CRON_SECRET` | Ya | Proteksi endpoint retensi |
-| `LOG_LEVEL` | Tidak | Default `info` (production), `debug` (development) |
-| `TURNSTILE_ENABLED` / `TURNSTILE_SECRET_KEY` | Tidak | Anti-bot opsional untuk chat publik |
+| Variabel                                     | Wajib | Keterangan                                             |
+| -------------------------------------------- | ----- | ------------------------------------------------------ |
+| `APP_URL`                                    | Ya    | URL publik aplikasi; dipakai untuk QR dan cek `Origin` |
+| `APP_ENV`                                    | Ya    | `development` / `preview` / `production`               |
+| `NEXT_PUBLIC_SUPABASE_URL`                   | Ya    | URL proyek Supabase                                    |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY`              | Ya    | Anon key (aman di browser, dibatasi RLS)               |
+| `SUPABASE_SERVICE_ROLE_KEY`                  | Ya    | **Server saja.** Untuk audit log dan job sistem        |
+| `GEMINI_API_KEY`                             | Ya    | **Server saja.** Dari Google AI Studio                 |
+| `GEMINI_MODEL_REFINE`                        | Ya    | Model keluarga Flash untuk perapihan                   |
+| `GEMINI_MODEL_CHAT`                          | Ya    | Model keluarga Flash-Lite untuk chatbot                |
+| `GEMINI_MODEL_FALLBACK`                      | Ya    | Model cadangan bila model utama gagal                  |
+| `IP_HASH_SALT`                               | Ya    | String acak ≥ 32 karakter; dirotasi bulanan            |
+| `CRON_SECRET`                                | Ya    | Proteksi endpoint retensi                              |
+| `LOG_LEVEL`                                  | Tidak | Default `info` (production), `debug` (development)     |
+| `TURNSTILE_ENABLED` / `TURNSTILE_SECRET_KEY` | Tidak | Anti-bot opsional untuk chat publik                    |
 
 Aplikasi menolak start jika variabel wajib kosong. Jangan pernah commit `.env*`.
 
@@ -99,5 +99,5 @@ Lihat [docs/SECURITY.md](docs/SECURITY.md) untuk prosedur rotasi kunci dan penan
 Kelompok ___ · Dosen pengampu: Sirojul Alam, S.Kom., M.Tr.Han
 
 | Nama | Prodi | Peran |
-|---|---|---|
-| | | |
+| ---- | ----- | ----- |
+|      |       |       |
