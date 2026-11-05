@@ -159,6 +159,8 @@ Format nama: `domain.action.result`.
 | `committee.created` / `committee.updated` / `committee.archived` | info |
 | `membership.invited` / `membership.role_changed` / `membership.removed` | info |
 
+`membership.invited` membawa `committeeId`, `emailHash`, `role`, `invited` (akun baru dibuat atau sudah ada); email mentah tidak pernah dicatat.
+
 ### Keamanan dan sistem
 | Event | Level | Field |
 |---|---|---|
