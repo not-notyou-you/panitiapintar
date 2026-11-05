@@ -15,21 +15,25 @@
     "test": "vitest run --project unit",
     "test:integration": "vitest run --project integration",
     "test:security": "vitest run --project security",
-    "test:e2e": "node -e \"console.log('test:e2e: placeholder, Playwright ditambahkan di Fase 1')\""
+    "test:e2e": "node -e \"console.log('test:e2e: placeholder, Playwright ditambahkan di Fase 1')\"",
+    "seed:build": "tsx scripts/build-seed.ts"
   },
   "dependencies": {
+    "@google/genai": "^2.32.0",
     "@supabase/ssr": "^0.12.7",
     "@supabase/supabase-js": "^2.119.0",
     "next": "^15.5.29",
     "pino": "^10.4.0",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
+    "react-markdown": "^10.1.0",
     "server-only": "^0.0.1",
     "ulid": "^3.0.2",
     "zod": "^4.6.7"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.7",
+    "@playwright/test": "^1.64.1",
     "@tailwindcss/postcss": "^4.3.4",
     "@types/node": "^26.6.6",
     "@types/react": "^19.3.0",
@@ -40,6 +44,7 @@
     "prettier": "^3.9.10",
     "supabase": "^3.0.0",
     "tailwindcss": "^4.3.4",
+    "tsx": "^4.23.15",
     "typescript": "^6.0.3",
     "vitest": "^5.1.0"
   },
