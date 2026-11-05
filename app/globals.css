@@ -430,3 +430,95 @@ button,
     animation: none !important;
   }
 }
+
+/* ---- Public landing (/) ---- */
+/* The 70/30 floor and pixel mountain suit single-window pages; the long landing page uses bands instead. */
+body:has(.site-nav) {
+  background: var(--bg);
+}
+body:has(.site-nav)::before {
+  display: none;
+}
+.site-nav {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: var(--card);
+  border-bottom: 4px solid var(--line);
+}
+.nav-link {
+  min-height: 44px;
+  align-items: center;
+  padding: 0 12px;
+  font-family: var(--font-pixel);
+  font-size: 13px;
+  text-transform: uppercase;
+  color: var(--tx);
+  text-decoration: none;
+}
+.nav-link:hover {
+  background: var(--acc-tint);
+}
+.band {
+  background: var(--card);
+  border-top: 4px solid var(--line);
+  border-bottom: 4px solid var(--line);
+}
+.site-footer {
+  background: var(--floor);
+  border-top: 4px solid var(--line);
+}
+.site-footer a {
+  color: var(--tx);
+}
+/* Event cards are links, so they get the full raised-button treatment (border + hard shadow). */
+.event-card {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  background: var(--card-hi);
+  border: 4px solid var(--line);
+  box-shadow: 6px 6px 0 var(--line);
+  color: var(--tx);
+  text-decoration: none;
+}
+.event-card:hover {
+  background: var(--acc-tint);
+}
+.event-card:active {
+  box-shadow: 2px 2px 0 var(--line);
+  transform: translate(4px, 4px);
+}
+.event-card-top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  background: var(--acc);
+  color: var(--on-acc);
+  border-bottom: 4px solid var(--line);
+  font-family: var(--font-pixel);
+  font-size: 12px;
+  text-transform: uppercase;
+}
+.event-card-cta {
+  font-family: var(--font-pixel);
+  font-size: 13px;
+  text-transform: uppercase;
+  color: var(--acc);
+}
+.step-num {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  background: var(--acc);
+  color: var(--on-acc);
+  font-family: var(--font-pixel);
+  font-size: 22px;
+}
+/* Examples are information, not buttons: tint only, no border (users mistook bordered boxes for inputs). */
+.example-q {
+  padding: 4px 8px;
+  background: var(--acc-tint);
+}

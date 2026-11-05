@@ -73,7 +73,7 @@ Font piksel hanya untuk elemen pendek. Teks panjang (jawaban chatbot, dokumen) m
 
 | Rute | Akses | Isi |
 |---|---|---|
-| `/` | Publik | Beranda: daftar acara aktif |
+| `/` | Publik | Landing page: navigasi lengket (Acara · Cara kerja · Privasi · Masuk panitia), hero + contoh percakapan, kartu acara aktif (maks. 6, `?semua=1` untuk semua), 3 langkah cara kerja, privasi dan data, bagian untuk panitia, footer. Latar 70/30 dan gunung piksel dimatikan; bagian dipisah pita `--card` bergaris 4 px. Kartu acara = tautan (border + bayangan keras); blok informasi tanpa border |
 | `/e/[slug]` | Publik | Chat publik satu acara |
 | `/login` | Publik | Login panitia (magic link email) |
 | `/panitia` | Panitia | Daftar kepanitiaan milik pengguna |
