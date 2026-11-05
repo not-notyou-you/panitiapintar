@@ -168,6 +168,16 @@ describe("UUIDs are ids, not PII", () => {
     expect(redact("rek 12345678-1234-5678").text).toBe("rek [NOMOR_REKENING]");
   });
 
+  it("keeps the nil UUID intact", () => {
+    expect(redact("instance 00000000-0000-0000-0000-000000000000").found).toEqual({});
+  });
+
+  it("redacts a digit run that is UUID-shaped but not a valid UUID", () => {
+    const r = redact("rek 12345678-1234-1234-1234-123456789012");
+    expect(r.text).not.toContain("123456789012");
+    expect(Object.keys(r.found).length).toBeGreaterThan(0);
+  });
+
   it("ignores spoofed private-use markers", () => {
     expect(redact("0 0812-0000-1234").text).toBe("0 [NOMOR_HP]");
   });

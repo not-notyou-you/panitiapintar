@@ -50,7 +50,10 @@ export function redact(input: string): RedactResult {
   return { text, found };
 }
 
-const UUID = /(?<![0-9a-f-])[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}(?![0-9a-f-])/gi;
+// Only RFC 9562 UUIDs (version 1-8, variant 8/9/a/b) or the nil UUID. A bare 8-4-4-4-12 digit run is
+// not exempt, so an account number written in UUID shape is still redacted.
+const UUID =
+  /(?<![0-9a-f-])(?:[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}|00000000-0000-0000-0000-000000000000)(?![0-9a-f-])/gi;
 
 /** Detects PII without returning any matched value. */
 export function scanPii(input: string): { found: PiiCounts; total: number } {
