@@ -148,3 +148,27 @@ describe("redact performance (DoS guard)", () => {
     expect(redact(`${"x".repeat(80)}@contoh.test`).text).not.toContain("@contoh.test");
   });
 });
+
+describe("UUIDs are ids, not PII", () => {
+  it.each([
+    "00000000-0000-4000-a000-0000000000c1",
+    "12345678-1234-4123-8123-123456789012",
+    "e3b0c442-98fc-4c14-9afb-f4c8996fb924",
+  ])("keeps %s intact", (id) => {
+    expect(redact(`committee ${id}`)).toEqual({ text: `committee ${id}`, found: {} });
+  });
+
+  it("still redacts PII next to a UUID", () => {
+    const r = redact("id 12345678-1234-4123-8123-123456789012 hp 081200009999");
+    expect(r.text).toBe("id 12345678-1234-4123-8123-123456789012 hp [NOMOR_HP]");
+    expect(r.found).toEqual({ phone: 1 });
+  });
+
+  it("still redacts a hyphenated account number that is not UUID-shaped", () => {
+    expect(redact("rek 12345678-1234-5678").text).toBe("rek [NOMOR_REKENING]");
+  });
+
+  it("ignores spoofed private-use markers", () => {
+    expect(redact("0 0812-0000-1234").text).toBe("0 [NOMOR_HP]");
+  });
+});

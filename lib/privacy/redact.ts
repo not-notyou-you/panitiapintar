@@ -33,7 +33,12 @@ const PATTERNS: ReadonlyArray<readonly [PiiType, RegExp]> = [
 
 /** Replaces PII with labels. Returns counts only; original values are never returned. */
 export function redact(input: string): RedactResult {
-  let text = normalizeForPii(input);
+  // UUIDs are internal ids, not PII, but all-digit segments ("00000000-0000-4000-…") look like account
+  // numbers. Park them behind private-use markers while the patterns run, then put them back.
+  const uuids: string[] = [];
+  let text = normalizeForPii(input)
+    .replace(/[]/g, "")
+    .replace(UUID, (m) => `${uuids.push(m) - 1}`);
   const found: PiiCounts = {};
   for (const [type, pattern] of PATTERNS) {
     text = text.replace(pattern, () => {
@@ -41,8 +46,11 @@ export function redact(input: string): RedactResult {
       return PII_LABELS[type];
     });
   }
+  if (uuids.length > 0) text = text.replace(/(\d+)/g, (_m, i: string) => uuids[Number(i)] ?? "");
   return { text, found };
 }
+
+const UUID = /(?<![0-9a-f-])[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}(?![0-9a-f-])/gi;
 
 /** Detects PII without returning any matched value. */
 export function scanPii(input: string): { found: PiiCounts; total: number } {
