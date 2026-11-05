@@ -51,25 +51,34 @@ npx supabase db reset           # migrasi + seed 3 acara dummy
 npm run dev                     # http://localhost:3000
 ```
 
-Akun seed (email `@contoh.test`) masuk lewat magic link yang muncul di Inbucket lokal (`http://localhost:54324`).
+Akun seed (email `@contoh.test`) masuk lewat magic link yang muncul di Mailpit lokal (`http://localhost:54324`):
+
+| Akun                                                                                 | Peran                                          |
+| ------------------------------------------------------------------------------------ | ---------------------------------------------- |
+| `superadmin@contoh.test`                                                             | Super admin (`/admin`, `/admin/logs`)          |
+| `admin.festek@contoh.test` · `admin.lomba@contoh.test` · `admin.seminar@contoh.test` | Admin satu acara                               |
+| `anggota.festek@contoh.test`                                                         | Anggota Festival Teknologi Fiktif (`/panitia`) |
+
+Tanpa kunci Gemini, set `AI_MOCK=true` di `.env.local` (jawaban tiruan deterministik; ditolak di production). Aktifkan pemindai rahasia sebelum commit sekali per clone: `git config core.hooksPath .githooks`.
 
 ### Variabel lingkungan
 
-| Variabel                                     | Wajib | Keterangan                                             |
-| -------------------------------------------- | ----- | ------------------------------------------------------ |
-| `APP_URL`                                    | Ya    | URL publik aplikasi; dipakai untuk QR dan cek `Origin` |
-| `APP_ENV`                                    | Ya    | `development` / `preview` / `production`               |
-| `NEXT_PUBLIC_SUPABASE_URL`                   | Ya    | URL proyek Supabase                                    |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY`              | Ya    | Anon key (aman di browser, dibatasi RLS)               |
-| `SUPABASE_SERVICE_ROLE_KEY`                  | Ya    | **Server saja.** Untuk audit log dan job sistem        |
-| `GEMINI_API_KEY`                             | Ya    | **Server saja.** Dari Google AI Studio                 |
-| `GEMINI_MODEL_REFINE`                        | Ya    | Model keluarga Flash untuk perapihan                   |
-| `GEMINI_MODEL_CHAT`                          | Ya    | Model keluarga Flash-Lite untuk chatbot                |
-| `GEMINI_MODEL_FALLBACK`                      | Ya    | Model cadangan bila model utama gagal                  |
-| `IP_HASH_SALT`                               | Ya    | String acak ≥ 32 karakter; dirotasi bulanan            |
-| `CRON_SECRET`                                | Ya    | Proteksi endpoint retensi                              |
-| `LOG_LEVEL`                                  | Tidak | Default `info` (production), `debug` (development)     |
-| `TURNSTILE_ENABLED` / `TURNSTILE_SECRET_KEY` | Tidak | Anti-bot opsional untuk chat publik                    |
+| Variabel                                     | Wajib | Keterangan                                                            |
+| -------------------------------------------- | ----- | --------------------------------------------------------------------- |
+| `APP_URL`                                    | Ya    | URL publik aplikasi; dipakai untuk QR dan cek `Origin`                |
+| `APP_ENV`                                    | Ya    | `development` / `preview` / `production`                              |
+| `NEXT_PUBLIC_SUPABASE_URL`                   | Ya    | URL proyek Supabase                                                   |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY`              | Ya    | Anon key (aman di browser, dibatasi RLS)                              |
+| `SUPABASE_SERVICE_ROLE_KEY`                  | Ya    | **Server saja.** Untuk audit log dan job sistem                       |
+| `GEMINI_API_KEY`                             | Ya    | **Server saja.** Dari Google AI Studio                                |
+| `GEMINI_MODEL_REFINE`                        | Ya    | Model keluarga Flash untuk perapihan                                  |
+| `GEMINI_MODEL_CHAT`                          | Ya    | Model keluarga Flash-Lite untuk chatbot                               |
+| `GEMINI_MODEL_FALLBACK`                      | Ya    | Model cadangan bila model utama gagal                                 |
+| `IP_HASH_SALT`                               | Ya    | String acak ≥ 32 karakter; kunci turunan berganti otomatis tiap bulan |
+| `CRON_SECRET`                                | Ya    | Proteksi endpoint retensi                                             |
+| `LOG_LEVEL`                                  | Tidak | Default `info` (production), `debug` (development)                    |
+| `TURNSTILE_ENABLED` / `TURNSTILE_SECRET_KEY` | Tidak | Anti-bot opsional untuk chat publik                                   |
+| `AI_MOCK`                                    | Tidak | `true` = Gemini tiruan (e2e/dev); wajib `false` di production         |
 
 Aplikasi menolak start jika variabel wajib kosong. Jangan pernah commit `.env*`.
 
@@ -80,8 +89,55 @@ npm run lint && npm run typecheck   # wajib bersih
 npm run test                        # unit
 npm run test:security               # RLS, redaksi, isolasi, authz, logging
 npm run test:e2e                    # Playwright
-npm run eval                        # evaluasi AI (memakai kuota Gemini)
+npm run eval -- --slug festival-teknologi-fiktif   # evaluasi AI ke server lokal (memakai kuota Gemini)
+npm run check:secrets               # pindai rahasia di semua file yang di-track
 ```
+
+## Deploy ke Vercel + Supabase cloud
+
+1. **Supabase cloud** (tier gratis): buat proyek, region Singapura. Lalu dari mesin lokal:
+   ```bash
+   npx supabase login
+   npx supabase link --project-ref <ref>
+   npx supabase db push            # menjalankan supabase/migrations/0001…0006, TANPA seed
+   ```
+   Seed dummy hanya untuk lokal. Untuk demo di cloud, buat acara lewat `/admin/new` (atau jalankan `supabase/seed.sql` sekali lewat SQL Editor bila memang ingin data dummy). Bucket `documents-raw` dibuat oleh migrasi `0005`.
+2. **Auth**: Authentication → URL Configuration: _Site URL_ = `APP_URL`; _Redirect URLs_ = `APP_URL/auth/callback`. Matikan _Enable sign ups_ (akun hanya lewat undangan admin). SMTP bawaan Supabase dibatasi beberapa email per jam; untuk demo dengan banyak login pakai SMTP sendiri.
+3. **Super admin pertama**: undang akun tim lewat Authentication → Users → _Invite_, lalu di SQL Editor: `update profiles set is_super_admin = true where user_id = '<uuid>';`. Hanya akun tim proyek (SECURITY §6).
+4. **Vercel**: impor repo, framework Next.js, Node 20+. Isi env **Production** (dan Preview dengan proyek Supabase/kunci terpisah bila ada):
+
+   | Variabel                                                              | Nilai production                                                                 |
+   | --------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
+   | `APP_URL`                                                             | `https://<domain>.vercel.app` (tanpa garis miring akhir)                         |
+   | `APP_ENV`                                                             | `production`                                                                     |
+   | `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_ANON_KEY`          | Settings → API proyek Supabase                                                   |
+   | `SUPABASE_SERVICE_ROLE_KEY`                                           | Settings → API → `service_role` (**jangan** diberi prefiks `NEXT_PUBLIC_`)       |
+   | `GEMINI_API_KEY`                                                      | Google AI Studio, dibatasi ke Generative Language API                            |
+   | `GEMINI_MODEL_REFINE` / `GEMINI_MODEL_CHAT` / `GEMINI_MODEL_FALLBACK` | Nama model terbaru keluarga Flash / Flash-Lite (cek AI Studio)                   |
+   | `IP_HASH_SALT`                                                        | `openssl rand -hex 32`                                                           |
+   | `CRON_SECRET`                                                         | `openssl rand -hex 32` (Vercel Cron mengirimnya sebagai `Authorization: Bearer`) |
+   | `LOG_LEVEL`                                                           | `info`                                                                           |
+   | `AI_MOCK`                                                             | `false`                                                                          |
+   | `TURNSTILE_ENABLED`                                                   | `false` (atau `true` + `TURNSTILE_SECRET_KEY`)                                   |
+
+5. **Deploy**, lalu periksa:
+   - `GET /api/health` → `{"status":"ok","db":"up","ai":"configured"}` (503 = ada yang belum benar).
+   - Vercel → Settings → Cron Jobs: `/api/cron/retention` terdaftar (`vercel.json`, harian 19.00 UTC = 02.00 WIB). Klik _Run_ sekali, lalu cari `retention.purge.completed` di Vercel Logs dan audit `system.retention_purge` di `/admin/logs`.
+   - Header keamanan di securityheaders.com (target A).
+
+## Rotasi kunci
+
+Wajib bila ada dugaan bocor, dan setiap akhir semester (SECURITY SEC-10):
+
+1. Buat kunci baru: Google AI Studio (`GEMINI_API_KEY`), Supabase → Settings → API → _Roll_ (`service_role`/anon), atau `openssl rand -hex 32` (`CRON_SECRET`, `IP_HASH_SALT`).
+2. Ganti nilainya di Vercel → Settings → Environment Variables, lalu **Redeploy** (env baru hanya terbaca setelah deploy ulang).
+3. Cabut kunci lama di penyedianya.
+4. Catat di audit log (nama variabel saja, tanpa nilai), dengan `.env.local` sementara berisi URL + service role proyek production:
+   ```bash
+   npm run audit:key-rotated -- GEMINI_API_KEY
+   ```
+
+Catatan: mengganti `IP_HASH_SALT` memutus kaitan hash IP lama (memang tujuannya) dan mereset hitungan rate limit. Mengganti anon key mengharuskan redeploy karena nilainya ikut di bundle browser.
 
 ## Keamanan dan privasi, ringkasnya
 

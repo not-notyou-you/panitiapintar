@@ -16,7 +16,7 @@ const noDangerousHtml = [
 ];
 
 const config = [
-  { ignores: [".next/**", ".next-e2e/**", "test-results/**", "playwright-report/**", "node_modules/**", "panitiapintar-docs/**", "next-env.d.ts"] },
+  { ignores: [".next/**", ".next-e2e/**", ".next-eval/**", "test-results/**", "playwright-report/**", "node_modules/**", "panitiapintar-docs/**", "next-env.d.ts"] },
   ...compat.extends("next/core-web-vitals", "next/typescript"),
   {
     rules: {
