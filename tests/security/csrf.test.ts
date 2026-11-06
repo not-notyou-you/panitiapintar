@@ -4,7 +4,7 @@ import { NextRequest } from "next/server";
 import { beforeAll, describe, expect, it } from "vitest";
 import { POST as chatPublic } from "@/app/api/chat/public/route";
 import { POST as logout } from "@/app/auth/logout/route";
-import { requestMagicLink } from "@/lib/actions/auth";
+import { changePassword, signInWithPassword } from "@/lib/actions/auth";
 import { archiveCommittee, createCommittee, updateCommittee } from "@/lib/actions/committees";
 import {
   approveDocument,
@@ -77,9 +77,19 @@ describe.skipIf(!dbAvailable)("CSRF / Origin", () => {
     ],
     ["removeMember", (c) => removeMember({ committeeId: a.A.id, userId: a.member.id }, c)],
     [
-      "requestMagicLink",
+      "signInWithPassword",
       (c) =>
-        requestMagicLink({ email: "x@contoh.test" }, c, {
+        signInWithPassword({ email: "x@contoh.test", password: "x" }, c, {
+          ipHash: "test",
+          rateLimit: async () => {
+            throw new Error("must not be reached");
+          },
+        }),
+    ],
+    [
+      "changePassword",
+      (c) =>
+        changePassword({ currentPassword: "x", newPassword: "yyyyyyyy" }, c, {
           ipHash: "test",
           rateLimit: async () => {
             throw new Error("must not be reached");

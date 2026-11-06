@@ -1,10 +1,10 @@
-// TESTING §3 scenarios 4–7 (AI_MOCK=true, local Supabase with seed, magic links read from Mailpit).
+// TESTING §3 scenarios 4–7 (AI_MOCK=true, local Supabase with seed, email + password login).
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import { expect, test, type Page } from "@playwright/test";
+import { TEST_PASSWORD } from "../../lib/auth/test-accounts";
 import { DOCX_MIME, makeDocx } from "../helpers/files";
 
-const MAILPIT = process.env.MAILPIT_URL ?? "http://127.0.0.1:54324";
 const SLUG = "festival-teknologi-fiktif";
 const OTHER_SLUG = "lomba-desain-fiktif";
 
@@ -41,32 +41,12 @@ test.beforeEach(async ({ page }) => {
   });
 });
 
-/** Requests a magic link through the UI and follows it from Mailpit. */
+/** Signs in through the login form with the seed password. */
 async function login(page: Page, email: string) {
-  const since = Date.now();
   await page.goto("/login");
   await page.getByLabel("Email panitia").fill(email);
-  await page.getByRole("button", { name: "Kirim tautan masuk" }).click();
-  await expect(page.getByRole("status")).toContainText("tautan masuk sudah dikirim");
-
-  let link: string | undefined;
-  for (let i = 0; i < 30 && !link; i++) {
-    const res = await fetch(`${MAILPIT}/api/v1/search?query=${encodeURIComponent(`to:${email}`)}&limit=1`);
-    const list = (await res.json()) as { messages?: { ID: string; Created: string }[] };
-    const msg = list.messages?.[0];
-    if (msg && Date.parse(msg.Created) >= since - 2_000) {
-      const full = (await (await fetch(`${MAILPIT}/api/v1/message/${msg.ID}`)).json()) as {
-        Text: string;
-        HTML: string;
-      };
-      link = (full.Text + full.HTML)
-        .match(/https?:\/\/[^\s"'<>]+\/auth\/v1\/verify[^\s"'<>]+/)?.[0]
-        ?.replace(/&amp;/g, "&");
-    }
-    if (!link) await page.waitForTimeout(500);
-  }
-  if (!link) throw new Error("magic link not found in Mailpit");
-  await page.goto(link);
+  await page.getByLabel("Kata sandi").fill(TEST_PASSWORD);
+  await page.getByRole("button", { name: "Masuk", exact: true }).click();
   await expect(page).toHaveURL(/\/(panitia|admin)/);
 }
 

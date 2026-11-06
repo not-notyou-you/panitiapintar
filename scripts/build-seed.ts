@@ -8,6 +8,7 @@ import { createHash } from "node:crypto";
 import { readdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { redact } from "../lib/privacy/redact";
+import { TEST_PASSWORD } from "../lib/auth/test-accounts";
 
 const ROOT = path.resolve(__dirname, "..");
 const DOCS = path.join(ROOT, "supabase/seed/docs");
@@ -61,7 +62,7 @@ export function buildSeed(): string {
     "-- Dummy data only (3 fictional events, @contoh.test accounts).",
     "begin;",
     "",
-    "-- Accounts (magic link only, no password).",
+    `-- Accounts: email + password (local test password, see lib/auth/test-accounts.ts).`,
   ];
 
   for (const u of USERS) {
@@ -70,7 +71,7 @@ export function buildSeed(): string {
       `insert into auth.users (instance_id, id, aud, role, email, encrypted_password, email_confirmed_at,` +
         ` raw_app_meta_data, raw_user_meta_data, created_at, updated_at, confirmation_token, recovery_token,` +
         ` email_change_token_new, email_change) values ('00000000-0000-0000-0000-000000000000', ${q(id)},` +
-        ` 'authenticated', 'authenticated', ${q(u.email)}, '', now(), '{"provider":"email","providers":["email"]}',` +
+        ` 'authenticated', 'authenticated', ${q(u.email)}, extensions.crypt(${q(TEST_PASSWORD)}, extensions.gen_salt('bf')), now(), '{"provider":"email","providers":["email"]}',` +
         ` '{}', now(), now(), '', '', '', '');`,
       `insert into auth.identities (id, user_id, provider_id, identity_data, provider, last_sign_in_at, created_at,` +
         ` updated_at) values (${q(uuidFor(`identity:${u.key}`))}, ${q(id)}, ${q(id)},` +

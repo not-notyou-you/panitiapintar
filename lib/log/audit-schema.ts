@@ -4,6 +4,7 @@ import { z } from "zod";
 export const AUDIT_ACTIONS = [
   "auth.login",
   "auth.access_denied",
+  "auth.password.changed",
   "committee.create",
   "committee.update",
   "committee.archive",

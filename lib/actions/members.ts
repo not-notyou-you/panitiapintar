@@ -1,4 +1,5 @@
 import "server-only";
+import { randomBytes } from "node:crypto";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { requireMembership } from "@/lib/auth/guards";
 import { AppError } from "@/lib/http/errors";
@@ -8,17 +9,35 @@ import { dbError, runAction, type ActionCtx } from "./runtime";
 
 // FR-A5. Emails are never logged raw (SEC-12): logs carry emailHash, audit rows carry the role only.
 
-/** Finds or invites an auth user. Auth Admin API requires the service role (SECURITY.md, K3). */
-export type FindOrInvite = (email: string) => Promise<{ userId: string; invited: boolean }>;
+/**
+ * Finds an auth user, or creates one with a temporary password (no e-mail is sent). Auth Admin API
+ * requires the service role (SECURITY.md, K3). The temporary password goes back to the inviting admin
+ * once, in the action result only: it is never logged, audited or stored outside Supabase Auth.
+ */
+export type FindOrInvite = (
+  email: string,
+) => Promise<{ userId: string; invited: boolean; tempPassword?: string }>;
 
-export function serviceFindOrInvite(svc: SupabaseClient, redirectTo: string): FindOrInvite {
+/** 16 chars from a 56-char alphabet without look-alikes (0/O, 1/l/I): ~93 bits. */
+export function tempPassword(): string {
+  const alphabet = "abcdefghijkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  const bytes = randomBytes(16);
+  return Array.from(bytes, (b) => alphabet[b % alphabet.length]).join("");
+}
+
+export function serviceFindOrInvite(svc: SupabaseClient): FindOrInvite {
   return async (email) => {
     const { data: found, error } = await svc.rpc("find_user_id_by_email", { p_email: email });
     if (error) throw new Error(`user lookup failed: ${error.code}`);
     if (found) return { userId: found as string, invited: false };
-    const { data, error: invErr } = await svc.auth.admin.inviteUserByEmail(email, { redirectTo });
-    if (invErr || !data.user) throw new Error(`invite failed: ${invErr?.code ?? "no_user"}`);
-    return { userId: data.user.id, invited: true };
+    const password = tempPassword();
+    const { data, error: createErr } = await svc.auth.admin.createUser({
+      email,
+      password,
+      email_confirm: true,
+    });
+    if (createErr || !data.user) throw new Error(`create user failed: ${createErr?.code ?? "no_user"}`);
+    return { userId: data.user.id, invited: true, tempPassword: password };
   };
 }
 
@@ -50,7 +69,7 @@ export function inviteMember(raw: unknown, ctx: ActionCtx, findOrInvite: FindOrI
   return runAction("inviteMember", ctx, inviteMemberSchema, raw, async (input, g) => {
     const actor = await requireMembership(input.committeeId, "admin", g);
     // Guard first: the service-role lookup/invite only ever runs for a verified committee admin.
-    const { userId, invited } = await findOrInvite(input.email);
+    const { userId, invited, tempPassword: password } = await findOrInvite(input.email);
     const { error } = await ctx.client
       .from("memberships")
       .insert({ user_id: userId, committee_id: input.committeeId, role: input.role });
@@ -79,7 +98,7 @@ export function inviteMember(raw: unknown, ctx: ActionCtx, findOrInvite: FindOrI
       metadata: { role: input.role },
       requestId: ctx.requestId,
     });
-    return { userId, invited };
+    return password ? { userId, invited, tempPassword: password } : { userId, invited };
   });
 }
 

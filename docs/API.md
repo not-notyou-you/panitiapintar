@@ -94,12 +94,13 @@ Akses: admin. Mengulang perapihan untuk status `refine_failed` (status lain → 
 | `archiveCommittee` | `{ committeeId }` | Super admin; RPC `archive_committee(p_committee, p_request_id)`, audit di dalam RPC |
 | `inviteMember` | `{ committeeId, email, role }` | Admin; email tidak dicatat mentah |
 | `changeMemberRole` / `removeMember` | `{ committeeId, userId, role? }` | Admin; tidak boleh menurunkan/menghapus admin terakhir (409, juga dijaga trigger) |
-| `requestMagicLink` | `{ email, next? }` | Publik. Rate limit `login` per IP-hash dan email-hash; balasan sama untuk email terdaftar maupun tidak |
+| `signInWithPassword` | `{ email, password, next? }` | Publik. Rate limit `login` per IP-hash dan email-hash; pesan sama ("Email atau kata sandi salah.") untuk email tak terdaftar maupun kata sandi salah. Membalas `{ next }` (lewat `safeNextPath`) |
+| `changePassword` | `{ currentPassword, newPassword }` | Pengguna masuk. Kata sandi saat ini dicek ulang; baru minimal 8 karakter; rate limit `login` per pengguna |
 
 `rejectDocument.reasonCategory` ∈ `tidak_akurat | tidak_relevan | data_pribadi | duplikat | lainnya`. Aksi berbasis dokumen pada dokumen acara lain → 404 `NOT_FOUND`.
 
-### `GET /auth/callback` · `POST /auth/logout`
-Callback menerima `code` (PKCE dari `signInWithOtp`) atau `token_hash` + `type` (`magiclink`/`invite`/`email`), lalu redirect 303 ke `next` yang sudah disaring `safeNextPath` (default `/panitia`); gagal → `/login?error=link`. Logout hanya `POST`, cek Origin, `signOut()` di server, redirect 303 ke `/login`.
+### `POST /auth/logout`
+Login memakai server action `signInWithPassword` (email + kata sandi, tanpa email/tautan; tidak ada route callback). Logout hanya `POST`, cek Origin, `signOut()` di server, redirect 303 ke `/login`.
 
 Keempat RPC dokumen (`approve_document`, `reject_document`, `set_document_visibility`, `reopen_document`) selalu menerima `requestId` dari request yang sedang berjalan (format `req_` + ULID; selain itu ditolak `invalid_request_id`) dan mengembalikan `version` baru. Pemetaan error RPC → HTTP: `40001 conflict` → 409 `CONFLICT`; `42501 forbidden` → 403 `FORBIDDEN`; `P0002 not_found` → 404; `22023` (`not_approved`, `pii_present`, `invalid_transition`, `invalid_version`, `invalid_reason`) → 400 `INVALID_INPUT`; `23514 last_admin` → 409 `CONFLICT`. Kolom status dokumen tidak bisa diubah dengan `UPDATE` langsung (lihat DATABASE §2b).
 

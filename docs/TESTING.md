@@ -39,7 +39,7 @@ Test unit dan keamanan **tidak memanggil Gemini sungguhan**; gunakan mock `lib/a
 1. Pengunjung membuka `/e/festival-teknologi-fiktif`, bertanya lokasi → jawaban + sumber.
 2. Pengunjung bertanya anggaran → "belum tersedia" + kontak resmi.
 3. Pengunjung mengetik nomor HP → peringatan muncul sebelum kirim.
-4. Admin login → unggah DOCX dummy → status "Sedang dirapikan" → halaman tinjau → edit → approve → ubah ke Publik → langsung terjawab di `/e/[slug]` (`admin-flow.spec.ts`; magic link diambil dari Mailpit lokal).
+4. Admin login → unggah DOCX dummy → status "Sedang dirapikan" → halaman tinjau → edit → approve → ubah ke Publik → langsung terjawab di `/e/[slug]` (`admin-flow.spec.ts`; login dengan kata sandi akun seed).
 5. Anggota acara A membuka URL acara B → halaman "bukan anggota" (`/admin/[id]`, halaman tinjau, `/api/qr`, `/panitia/[id]`).
 6. Panitia membuat rundown → tabel tampil → tombol Salin (isi clipboard TSV dicek); lalu chat internal menampilkan label INTERNAL. Lebar halaman ≤ 360 px.
 7. Super admin membuka `/admin/logs` → aksi approve dari langkah 4 terlihat dengan `requestId` (panel detail), tab AI tampil, ekspor CSV 200. Skenario 4–7 ada di `admin-flow.spec.ts` dan berjalan berurutan (`workers: 1`).

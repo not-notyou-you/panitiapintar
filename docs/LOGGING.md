@@ -105,7 +105,8 @@ Format nama: `domain.action.result`.
 ### Auth
 | Event | Level | Field |
 |---|---|---|
-| `auth.magiclink.requested` | info | `emailHash` |
+| `auth.password.changed` | info | `userId` |
+| `auth.password.change_failed` | warn | `reason` |
 | `auth.login.succeeded` | info | `userId` |
 | `auth.login.failed` | warn | `reason` |
 | `auth.logout.completed` | info | `userId` |
@@ -179,7 +180,8 @@ Format nama: `domain.action.result`.
 
 | Action | Target | Metadata (tanpa PII) |
 |---|---|---|
-| `auth.login` | system | `method` |
+| `auth.login` | system | `method` (`password`) |
+| `auth.password.changed` | system | — |
 | `auth.access_denied` | committee/document | `required`, `route` |
 | `committee.create` / `committee.update` / `committee.archive` | committee | field yang berubah (nama field saja) |
 | `membership.add` / `membership.role_change` / `membership.remove` | membership | `role`, `from`, `to` |

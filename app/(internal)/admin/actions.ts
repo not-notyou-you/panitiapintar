@@ -7,7 +7,6 @@ import * as documents from "@/lib/actions/documents";
 import * as members from "@/lib/actions/members";
 import type { ActionCtx, ActionResult } from "@/lib/actions/runtime";
 import { serverActionCtx } from "@/lib/actions/server-ctx";
-import { env } from "@/lib/env";
 import { serviceClient } from "@/lib/supabase/service";
 
 async function run<T>(fn: (ctx: ActionCtx) => Promise<ActionResult<T>>): Promise<ActionResult<T>> {
@@ -43,10 +42,7 @@ export async function deleteDocumentAction(input: unknown) {
 }
 
 export async function inviteMemberAction(input: unknown) {
-  const redirectTo = `${new URL(env().APP_URL).origin}/auth/callback?next=/panitia`;
-  return run((ctx) =>
-    members.inviteMember(input, ctx, members.serviceFindOrInvite(serviceClient(), redirectTo)),
-  );
+  return run((ctx) => members.inviteMember(input, ctx, members.serviceFindOrInvite(serviceClient())));
 }
 export async function changeMemberRoleAction(input: unknown) {
   return run((ctx) => members.changeMemberRole(input, ctx));

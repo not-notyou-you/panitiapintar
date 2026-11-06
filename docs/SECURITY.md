@@ -51,7 +51,7 @@ Model ancaman, kontrol keamanan, dan aturan implementasi. Setiap kontrol punya I
 - Penolakan dicatat `auth.access.denied` + `audit_logs` (outcome `denied`).
 - Super admin lolos setiap `requireMembership()` dan diperlakukan sebagai admin semua kepanitiaan, termasuk di policy insert `documents`/`document_versions` dan storage (`0005_admin`). **Kecuali Mode Panitia** (`/panitia/[id]`, `/api/chat/internal`, `/api/generate/*`): `requireMembership(…, { realMemberOnly: true })` hanya meloloskan anggota sungguhan, supaya dokumen internal tidak bisa ditanyakan oleh akun yang bukan panitia acara itu.
 - Aksi/route berbasis dokumen membaca dokumen dengan JWT pengguna: dokumen acara lain tidak terlihat lewat RLS sehingga hasilnya 404 (bukan 403), agar keberadaannya tidak bocor. Urutannya: `requireUser()` → baca dokumen → `requireMembership(doc.committee_id, …)`.
-- Pengecualian aturan service role: undangan anggota memanggil Auth Admin API (`find_user_id_by_email`, `inviteUserByEmail`) yang hanya bisa dengan service role. Dibatasi di `serviceFindOrInvite()` dan **hanya** dipanggil setelah `requireMembership(committeeId, 'admin')`; baris `memberships` tetap ditulis dengan JWT admin.
+- Pengecualian aturan service role: undangan anggota memanggil Auth Admin API (`find_user_id_by_email`, `auth.admin.createUser`) yang hanya bisa dengan service role. Akun baru dibuat terkonfirmasi dengan kata sandi sementara acak 16 karakter yang dikembalikan **sekali** ke admin pengundang (tidak dicatat di log/audit, tidak dikirim email); anggota menggantinya di `/panitia/akun`. Dibatasi di `serviceFindOrInvite()` dan **hanya** dipanggil setelah `requireMembership(committeeId, 'admin')`; baris `memberships` tetap ditulis dengan JWT admin.
 
 ### SEC-04 · Alur dokumen aman
 - Dokumen baru selalu `internal`, `uploaded`, versi 1, tanpa approval (dipaksa policy insert `0004_harden`).
@@ -110,7 +110,7 @@ Model ancaman, kontrol keamanan, dan aturan implementasi. Setiap kontrol punya I
 | `chat_internal` + generator per user | 20/menit, 300/hari |
 | `upload` per user | 10/jam |
 | `refine` (coba ulang) per kepanitiaan | 20/hari |
-| `login` (magic link) per IP-hash **dan** per email-hash | 5/jam |
+| `login` (email + kata sandi) per IP-hash **dan** per email-hash; ganti kata sandi per pengguna | 5/jam |
 
 - Respons 429 dengan header `Retry-After`; dicatat `ratelimit.exceeded`.
 - Opsional: Cloudflare Turnstile (gratis) di chat publik jika terjadi penyalahgunaan; dikendalikan `TURNSTILE_ENABLED`.
@@ -155,7 +155,7 @@ Model ancaman, kontrol keamanan, dan aturan implementasi. Setiap kontrol punya I
   4. Catat `config.key.rotated` (tanpa nilai kunci) di audit log: `npm run audit:key-rotated -- GEMINI_API_KEY` (env target di `.env.local`).
 
 ### SEC-11 · Sesi dan CSRF
-- Supabase Auth magic link; cookie `HttpOnly`, `Secure`, `SameSite=Lax`.
+- Supabase Auth email + kata sandi (pesan gagal seragam "Email atau kata sandi salah.", tanpa enumerasi akun; kata sandi tidak pernah dicatat); cookie `HttpOnly`, `Secure`, `SameSite=Lax`.
 - Setiap mutasi (route handler **dan** server action) memeriksa header `Origin` sama persis dengan origin `APP_URL` lewat `assertSameOrigin()`; asing **atau kosong** → 403 dan `security.csrf.blocked`. Klien non-browser (mis. skrip eval) wajib mengirim `Origin: APP_URL`.
 - Server Actions Next.js juga punya proteksi origin bawaan; pengecekan sendiri tetap dilakukan agar bisa diuji (`csrf.test.ts`).
 - Login hanya untuk akun yang sudah ada (`shouldCreateUser: false`); balasan formulir selalu sama agar email anggota tidak bisa ditebak. Parameter `next` hanya menerima path `/panitia…` atau `/admin…` (`safeNextPath`), tidak ada open redirect.

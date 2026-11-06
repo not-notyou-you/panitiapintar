@@ -82,7 +82,16 @@ export const changeMemberRoleSchema = z.object({
 });
 export const removeMemberSchema = z.object({ committeeId: uuidSchema, userId: uuidSchema });
 
-export const magicLinkSchema = z.object({ email: emailSchema, next: z.string().max(200).optional() });
+export const changePasswordSchema = z.object({
+  currentPassword: z.string().min(1).max(200),
+  newPassword: z.string().min(8, "Kata sandi baru minimal 8 karakter.").max(200),
+});
+
+export const loginSchema = z.object({
+  email: emailSchema,
+  password: z.string().min(1).max(200),
+  next: z.string().max(200).optional(),
+});
 
 export const uploadFieldsSchema = z.object({
   committeeId: uuidSchema,

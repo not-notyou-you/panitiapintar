@@ -29,7 +29,7 @@ Final project mata kuliah AI706 (UMN). Semua layanan memakai **tier gratis**.
 ## Stack
 
 - Next.js 15 (App Router) + TypeScript `strict`, Node 20+
-- Supabase: Postgres, Auth (magic link email), Storage (bucket privat), RLS
+- Supabase: Postgres, Auth (email + kata sandi), Storage (bucket privat), RLS
 - Gemini API via `@google/genai`, dua model:
   - `GEMINI_MODEL_REFINE` (keluarga Flash): merapikan dokumen
   - `GEMINI_MODEL_CHAT` (keluarga Flash-Lite): chatbot dan generator

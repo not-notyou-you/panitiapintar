@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 
-/** Copies a short non-secret value (requestId). Falls back silently when the clipboard is blocked. */
+/** Copies a short value (requestId, a one-time temporary password). Falls back silently when the clipboard is blocked. */
 export function CopyButton({ value, label = "Salin" }: { value: string; label?: string }) {
   const [done, setDone] = useState(false);
   return (

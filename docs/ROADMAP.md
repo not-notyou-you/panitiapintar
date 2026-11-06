@@ -28,7 +28,7 @@ Kerjakan berurutan. Setiap langkah selesai jika kriteria terpenuhi dan `lint`, `
 
 | # | Langkah | Selesai jika |
 |---|---|---|
-| 2.1 | Login magic link, `/auth/callback`, `requireUser/Role/Membership` | `authz.test.ts` lolos |
+| 2.1 | Login email + kata sandi, ganti kata sandi, `requireUser/Role/Membership` | `authz.test.ts` lolos |
 | 2.2 | Super admin: buat & arsipkan kepanitiaan | Audit tercatat |
 | 2.3 | Unggah dokumen: validasi file, storage privat, ekstraksi, PII scan | `upload.test.ts` lolos |
 | 2.4 | Perapihan dengan `GEMINI_MODEL_REFINE` + validasi JSON | Status berpindah benar; `refine_failed` bisa di-retry |

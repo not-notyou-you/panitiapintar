@@ -92,7 +92,7 @@ Baca ulang: CLAUDE.md, docs/PRD.md §5–7, docs/ARCHITECTURE.md §4 dan §5.3, 
 docs/LOGGING.md §5–6 (Auth, Dokumen, Kepanitiaan, audit), docs/INTERFACE.md §3, §4.4–4.8, §5. Rencana dulu, tunggu persetujuanku.
 
 Lingkup = ROADMAP Fase 2:
-1. Login magic link Supabase, /auth/callback, logout; requireUser(), requireRole('super_admin'),
+1. Login email + kata sandi Supabase, ganti kata sandi, logout; requireUser(), requireRole('super_admin'),
    requireMembership(committeeId, role?) dipanggil di setiap route/action; middleware memblokir /panitia dan /admin tanpa sesi.
    Cek Origin untuk semua mutasi (SEC-11).
 2. Super admin: buat, edit, arsipkan kepanitiaan (/admin, /admin/new).

@@ -22,6 +22,9 @@ export function AdminShell({ children, superAdmin = false }: { children: ReactNo
               </Link>
             </>
           ) : null}
+          <Link href="/panitia/akun" className="tab">
+            Akun
+          </Link>
           <form action="/auth/logout" method="post">
             <button type="submit" className="btn btn-ghost">
               Keluar

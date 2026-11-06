@@ -51,7 +51,7 @@ npx supabase db reset           # migrasi + seed 3 acara dummy
 npm run dev                     # http://localhost:3000
 ```
 
-Akun seed (email `@contoh.test`) masuk lewat magic link yang muncul di Mailpit lokal (`http://localhost:54324`):
+Akun seed (email `@contoh.test`) masuk dengan email + kata sandi `panitia-uji-2026` (hanya untuk seed lokal; daftarnya juga tampil di `/login` di luar produksi):
 
 | Akun                                                                                 | Peran                                          |
 | ------------------------------------------------------------------------------------ | ---------------------------------------------- |
@@ -102,7 +102,7 @@ npm run check:secrets               # pindai rahasia di semua file yang di-track
    npx supabase db push            # menjalankan supabase/migrations/0001…0006, TANPA seed
    ```
    Seed dummy hanya untuk lokal. Untuk demo di cloud, buat acara lewat `/admin/new` (atau jalankan `supabase/seed.sql` sekali lewat SQL Editor bila memang ingin data dummy). Bucket `documents-raw` dibuat oleh migrasi `0005`.
-2. **Auth**: Authentication → URL Configuration: _Site URL_ = `APP_URL`; _Redirect URLs_ = `APP_URL/auth/callback`. Matikan _Enable sign ups_ (akun hanya lewat undangan admin). SMTP bawaan Supabase dibatasi beberapa email per jam; untuk demo dengan banyak login pakai SMTP sendiri.
+2. **Auth**: Authentication → URL Configuration: _Site URL_ = `APP_URL`; Matikan _Enable sign ups_ (akun hanya dibuat admin lewat menu Anggota, dengan kata sandi sementara). Login memakai email + kata sandi, jadi tidak butuh SMTP.
 3. **Super admin pertama**: undang akun tim lewat Authentication → Users → _Invite_, lalu di SQL Editor: `update profiles set is_super_admin = true where user_id = '<uuid>';`. Hanya akun tim proyek (SECURITY §6).
 4. **Vercel**: impor repo, framework Next.js, Node 20+. Isi env **Production** (dan Preview dengan proyek Supabase/kunci terpisah bila ada):
 

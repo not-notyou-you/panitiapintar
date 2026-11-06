@@ -75,7 +75,8 @@ Font piksel (Pixelify Sans) dan monospace untuk isi diganti pada 2026-11-06 kare
 |---|---|---|
 | `/` | Publik | Landing page: navigasi lengket (Acara · Cara kerja · Privasi · Masuk panitia), hero + contoh percakapan, kartu acara aktif (maks. 6, `?semua=1` untuk semua), 3 langkah cara kerja, privasi dan data, bagian untuk panitia, footer. Latar 70/30 dan gunung piksel dimatikan; bagian dipisah pita `--card` bergaris 4 px. Kartu acara = tautan (border + bayangan keras); blok informasi tanpa border |
 | `/e/[slug]` | Publik | Chat publik satu acara |
-| `/login` | Publik | Login panitia (magic link email) |
+| `/login` | Publik | Login panitia (email + kata sandi). Di luar produksi menampilkan akun uji seed beserta kata sandinya |
+| `/panitia/akun` | Login | Ganti kata sandi (mis. kata sandi sementara dari admin) |
 | `/panitia` | Panitia | Daftar kepanitiaan milik pengguna |
 | `/panitia/[id]` | Anggota kepanitiaan | Ruang kerja: Tanya Dokumen · Rundown · Checklist |
 | `/admin` | Super admin | Daftar semua kepanitiaan |

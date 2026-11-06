@@ -8,6 +8,7 @@ import {
   removeMemberAction,
 } from "@/app/(internal)/admin/actions";
 import { Button } from "@/components/internal/ui/Button";
+import { CopyButton } from "@/components/internal/ui/CopyButton";
 
 export interface MemberItem {
   user_id: string;
@@ -30,6 +31,8 @@ export function MembersPanel({
   const [role, setRole] = useState<"admin" | "member">("member");
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [pending, start] = useTransition();
+  // Shown once after creating a new account; held in state only, gone on reload.
+  const [newAccount, setNewAccount] = useState<{ email: string; password: string } | null>(null);
   const admins = members.filter((m) => m.role === "admin").length;
 
   const report = (
@@ -52,7 +55,9 @@ export function MembersPanel({
           e.preventDefault();
           start(async () => {
             const r = await inviteMemberAction({ committeeId, email, role });
-            report(r, "Undangan dikirim.");
+            const created = r.ok && r.data.tempPassword ? r.data.tempPassword : null;
+            report(r, created ? "Akun baru dibuat dan ditambahkan." : "Anggota ditambahkan.");
+            setNewAccount(created ? { email, password: created } : null);
             if (r.ok) setEmail("");
           });
         }}
@@ -81,13 +86,26 @@ export function MembersPanel({
           </select>
         </label>
         <Button type="submit" disabled={pending}>
-          Undang
+          Tambah
         </Button>
       </form>
       {msg ? (
         <p role="status" className={`${msg.ok ? "notice" : "pii"} m-0`}>
           {msg.text}
         </p>
+      ) : null}
+
+      {newAccount ? (
+        <div role="status" className="notice m-0 flex flex-col gap-1 text-xs">
+          <span>
+            Berikan data masuk ini ke <strong>{newAccount.email}</strong>. Kata sandi hanya ditampilkan
+            sekali.
+          </span>
+          <span className="flex flex-wrap items-center gap-2">
+            Kata sandi sementara: <code>{newAccount.password}</code>
+            <CopyButton value={newAccount.password} />
+          </span>
+        </div>
       ) : null}
 
       <div className="overflow-x-auto">

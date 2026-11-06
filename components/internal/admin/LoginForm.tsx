@@ -1,12 +1,22 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { requestMagicLinkAction } from "@/app/(internal)/login/actions";
+import { signInAction } from "@/app/(internal)/login/actions";
 import { Button } from "@/components/internal/ui/Button";
 
-export function LoginForm({ next, initialEmail = "" }: { next?: string; initialEmail?: string }) {
+export function LoginForm({
+  next,
+  initialEmail = "",
+  initialPassword = "",
+}: {
+  next?: string;
+  initialEmail?: string;
+  /** Local test accounts only (login page passes it outside production). */
+  initialPassword?: string;
+}) {
   const [email, setEmail] = useState(initialEmail);
-  const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  const [password, setPassword] = useState(initialPassword);
+  const [error, setError] = useState<string | null>(null);
   const [pending, start] = useTransition();
 
   return (
@@ -15,8 +25,14 @@ export function LoginForm({ next, initialEmail = "" }: { next?: string; initialE
       onSubmit={(e) => {
         e.preventDefault();
         start(async () => {
-          const r = await requestMagicLinkAction({ email, next });
-          setMsg(r.ok ? { ok: true, text: r.data.message } : { ok: false, text: r.error.message });
+          const r = await signInAction({ email, password, next });
+          if (r.ok) {
+            // Full navigation so every server component re-renders with the new session cookie.
+            window.location.assign(r.data.next);
+            return;
+          }
+          setPassword("");
+          setError(r.error.message);
         });
       }}
     >
@@ -26,7 +42,7 @@ export function LoginForm({ next, initialEmail = "" }: { next?: string; initialE
           className="field"
           type="email"
           name="email"
-          autoComplete="email"
+          autoComplete="username"
           required
           maxLength={254}
           placeholder="nama@contoh.test"
@@ -34,12 +50,25 @@ export function LoginForm({ next, initialEmail = "" }: { next?: string; initialE
           onChange={(e) => setEmail(e.target.value)}
         />
       </label>
+      <label className="label">
+        Kata sandi
+        <input
+          className="field"
+          type="password"
+          name="password"
+          autoComplete="current-password"
+          required
+          maxLength={200}
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+        />
+      </label>
       <Button type="submit" disabled={pending}>
-        {pending ? "Mengirim…" : "Kirim tautan masuk"}
+        {pending ? "Memeriksa…" : "Masuk"}
       </Button>
-      {msg ? (
-        <p role="status" className={msg.ok ? "notice m-0" : "pii m-0"}>
-          {msg.text}
+      {error ? (
+        <p role="alert" className="pii m-0">
+          {error}
         </p>
       ) : null}
     </form>

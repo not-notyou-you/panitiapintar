@@ -54,7 +54,7 @@ panitiapintar/
 │   ├── (internal)/                      # AREA INTERNAL (tim panitia/admin)
 │   │   ├── layout.tsx                   # <div data-area="internal"> + internal.css
 │   │   ├── internal.css                 # semua gaya internal, di-scope [data-area="internal"]
-│   │   ├── login/                       # magic link
+│   │   ├── login/                       # email + kata sandi
 │   │   ├── panitia/                     # /panitia, /panitia/[committeeId]
 │   │   ├── admin/                       # /admin, /admin/new, /admin/logs, /admin/[committeeId]/…
 │   │   ├── not-found.tsx · error.tsx
@@ -148,5 +148,6 @@ Setiap operasi I/O punya **timeout eksplisit**. Tidak ada `await` tanpa batas wa
 | Tanpa RAG/vector DB | 3–5 dokumen per acara muat di konteks Gemini; lebih sederhana dan lebih mudah diaudit |
 | Dua model Gemini | REFINE dipanggil jarang dan butuh ketelitian; CHAT dipanggil sering dan butuh kuota longgar |
 | Rate limit di Postgres | Tidak menambah layanan luar; cukup untuk skala kampus |
+| Login email + kata sandi, bukan magic link | Tidak bergantung pada pengiriman email (SMTP/Mailpit, kuota email Supabase); anggota baru dibuat admin dengan kata sandi sementara sekali tampil |
 | Filter publik di fungsi DB | Pengaman struktural; bug di JS tidak bisa membocorkan dokumen internal |
 | Riwayat chat publik di browser | Server stateless untuk pengunjung; tidak ada profil pengguna anonim |
