@@ -101,10 +101,10 @@ export default async function HomePage({ searchParams }: Props) {
         {/* Hero */}
         <section className="mx-auto grid max-w-[1180px] items-center gap-10 px-4 pt-10 pb-14 sm:px-7 md:grid-cols-[minmax(0,1fr)_400px] md:pt-16">
           <div className="flex flex-col items-start gap-5">
-            <span className="font-pixel text-acc text-xs uppercase">
+            <span className="font-display text-acc text-xs uppercase">
               Tanpa login · gratis · langsung dari HP
             </span>
-            <h1 className="font-pixel m-0 text-3xl leading-tight uppercase sm:text-4xl md:text-5xl">
+            <h1 className="font-display m-0 text-3xl leading-tight sm:text-4xl md:text-5xl">
               Tanya acara kampus, dijawab dari dokumen resmi panitia
             </h1>
             <p className="text-mut m-0 max-w-xl text-sm leading-relaxed sm:text-base">
@@ -152,7 +152,7 @@ export default async function HomePage({ searchParams }: Props) {
                             <span>{when ?? "Chat dibuka"}</span>
                           </span>
                           <span className="flex flex-1 flex-col gap-3 p-4">
-                            <span className="font-pixel text-lg leading-snug uppercase">{c.name}</span>
+                            <span className="font-display text-lg leading-snug">{c.name}</span>
                             <span className="text-mut flex flex-col gap-1 text-xs">
                               {c.event_date ? <span>Tanggal: {formatDate(c.event_date)}</span> : null}
                               {c.location ? <span>Lokasi: {c.location}</span> : null}
@@ -187,7 +187,7 @@ export default async function HomePage({ searchParams }: Props) {
                   <span className="step-num" aria-hidden="true">
                     {i + 1}
                   </span>
-                  <h3 className="font-pixel m-0 text-base uppercase">{s.title}</h3>
+                  <h3 className="font-display m-0 text-base">{s.title}</h3>
                   <p className="text-mut m-0 text-sm leading-relaxed">{s.body}</p>
                 </li>
               ))}
@@ -217,7 +217,7 @@ export default async function HomePage({ searchParams }: Props) {
                 <li key={p.title} className="flex flex-col gap-2">
                   <span className="flex items-center gap-2">
                     <span className="diamond text-acc" style={{ width: 12, height: 12 }} aria-hidden="true" />
-                    <h3 className="font-pixel m-0 text-sm uppercase">{p.title}</h3>
+                    <h3 className="font-display m-0 text-sm">{p.title}</h3>
                   </span>
                   <p className="text-mut m-0 text-sm leading-relaxed">{p.body}</p>
                 </li>
@@ -257,8 +257,8 @@ export default async function HomePage({ searchParams }: Props) {
 function SectionTitle({ kicker, title }: { kicker: string; title: string }) {
   return (
     <div className="flex flex-col gap-1">
-      <span className="font-pixel text-acc text-xs uppercase">{kicker}</span>
-      <h2 className="font-pixel m-0 text-2xl uppercase sm:text-3xl">{title}</h2>
+      <span className="font-display text-acc text-xs uppercase">{kicker}</span>
+      <h2 className="font-display m-0 text-2xl sm:text-3xl">{title}</h2>
     </div>
   );
 }

@@ -1,9 +1,14 @@
 import type { Metadata } from "next";
-import { IBM_Plex_Mono, Pixelify_Sans } from "next/font/google";
+import { IBM_Plex_Mono, Plus_Jakarta_Sans } from "next/font/google";
 import { currentRequestId } from "@/lib/http/request-id.server";
 import "./base.css";
 
-const pixelify = Pixelify_Sans({ subsets: ["latin"], variable: "--font-pixelify" });
+// Readable sans for all UI text; mono only for codes such as requestId.
+const jakarta = Plus_Jakarta_Sans({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-jakarta",
+});
 const plexMono = IBM_Plex_Mono({ subsets: ["latin"], weight: ["400", "600"], variable: "--font-plex-mono" });
 
 export const metadata: Metadata = {
@@ -15,7 +20,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
   // Exposed so client error boundaries can show the same requestId the server logged (INTERFACE §4.10).
   const requestId = await currentRequestId();
   return (
-    <html lang="id" className={`${pixelify.variable} ${plexMono.variable}`}>
+    <html lang="id" className={`${jakarta.variable} ${plexMono.variable}`}>
       <head>{requestId ? <meta name="request-id" content={requestId} /> : null}</head>
       <body>{children}</body>
     </html>

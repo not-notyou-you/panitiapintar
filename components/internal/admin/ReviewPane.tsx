@@ -157,7 +157,7 @@ export function ReviewPane(props: {
             <div className="pane flex flex-col gap-3">
               {sections.map((s, i) => (
                 <div key={i} className={s.unknownFacts.length ? "flagged" : undefined}>
-                  {s.heading ? <p className="font-pixel m-0 uppercase">{s.heading}</p> : null}
+                  {s.heading ? <p className="font-display m-0 uppercase">{s.heading}</p> : null}
                   <div>{s.body.trim()}</div>
                   {s.unknownFacts.length ? (
                     <p className="m-0 mt-1 text-[11px]">

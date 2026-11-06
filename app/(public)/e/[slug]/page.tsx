@@ -75,7 +75,7 @@ export default async function EventChatPage({ params }: Props) {
       <Window title={committee.name} titleId="event-title">
         <div className="flex flex-col gap-3">
           <div>
-            <h1 className="m-0 text-base uppercase">{committee.name}</h1>
+            <h1 className="m-0 text-base">{committee.name}</h1>
             {meta ? <p className="text-mut m-0 text-xs">{meta}</p> : null}
           </div>
 

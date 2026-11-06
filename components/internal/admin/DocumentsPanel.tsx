@@ -48,7 +48,7 @@ export function DocumentsPanel({ committeeId, docs }: { committeeId: string; doc
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h2 className="m-0 text-base uppercase">
+        <h2 className="m-0 text-base">
           Dokumen ({active}/{MAX_DOCS})
         </h2>
       </div>

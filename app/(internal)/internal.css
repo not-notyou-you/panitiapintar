@@ -34,8 +34,9 @@ body:has(> [data-area="internal"]) {
   min-height: 100dvh;
   background: linear-gradient(to bottom, var(--bg) 0 72%, var(--floor) 72%);
   color: var(--tx);
-  font-family: var(--font-mono);
-  font-size: 14px;
+  font-family: var(--font-sans);
+  font-size: 15px;
+  line-height: 1.6;
 }
 
 /* Pixel mountain on the floor (INTERFACE §2 "Bentuk dan kedalaman"). */
@@ -59,8 +60,8 @@ body:has(> [data-area="internal"])::before {
 [data-area="internal"] h2,
 [data-area="internal"] h3,
 [data-area="internal"] button,
-[data-area="internal"] .font-pixel {
-  font-family: var(--font-pixel);
+[data-area="internal"] .font-display {
+  font-family: var(--font-display);
 }
 
 [data-area="internal"] :focus-visible {
@@ -92,7 +93,7 @@ body:has(> [data-area="internal"])::before {
   background: var(--acc);
   color: var(--on-acc);
   border-bottom: 4px solid var(--line);
-  font-family: var(--font-pixel);
+  font-family: var(--font-display);
   font-size: 13px;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -192,7 +193,7 @@ body:has(> [data-area="internal"])::before {
   padding: 6px 10px;
   border: 3px solid var(--line);
   background: var(--card-hi);
-  font-family: var(--font-mono);
+  font-family: var(--font-sans);
   font-size: 12px;
   text-align: left;
   cursor: pointer;
@@ -260,7 +261,7 @@ body:has(> [data-area="internal"])::before {
 
 [data-area="internal"] .src-label {
   margin-right: 6px;
-  font-family: var(--font-pixel);
+  font-family: var(--font-display);
   color: var(--acc);
 }
 
@@ -306,7 +307,7 @@ body:has(> [data-area="internal"])::before {
   padding: 10px;
   border: 3px solid var(--line);
   background: #fff;
-  font-family: var(--font-mono);
+  font-family: var(--font-sans);
   font-size: 13px;
   box-shadow: inset 3px 3px 0 var(--card-lo);
 }
@@ -337,7 +338,7 @@ body:has(> [data-area="internal"])::before {
   display: inline-block;
   padding: 1px 6px;
   border: 2px solid var(--line);
-  font-family: var(--font-pixel);
+  font-family: var(--font-display);
   font-size: 11px;
   text-transform: uppercase;
   white-space: nowrap;
@@ -378,7 +379,7 @@ body:has(> [data-area="internal"])::before {
 [data-area="internal"] .tab {
   min-height: 44px;
   padding: 10px 12px;
-  font-family: var(--font-pixel);
+  font-family: var(--font-display);
   font-size: 13px;
   text-transform: uppercase;
   color: var(--tx);
@@ -398,7 +399,7 @@ body:has(> [data-area="internal"])::before {
 
 [data-area="internal"] .table th {
   text-align: left;
-  font-family: var(--font-pixel);
+  font-family: var(--font-display);
   font-weight: normal;
   text-transform: uppercase;
   padding: 6px;
@@ -464,4 +465,34 @@ body:has(> [data-area="internal"])::before {
   [data-area="internal"] *::after {
     animation: none !important;
   }
+}
+
+/* Login page: seed accounts helper (information, so tint without border). */
+[data-area="internal"] .test-accounts {
+  background: var(--acc-tint);
+}
+[data-area="internal"] .test-accounts a {
+  color: var(--tx);
+}
+
+/* Codes (requestId, ids) keep a monospace face so characters are unambiguous. */
+[data-area="internal"] code,
+[data-area="internal"] pre {
+  font-family: var(--font-mono);
+}
+
+/* Headings and short display text read better slightly heavier in a sans face. */
+[data-area="internal"] h1,
+[data-area="internal"] h2,
+[data-area="internal"] h3 {
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+[data-area="internal"] .font-display,
+[data-area="internal"] button,
+[data-area="internal"] .btn,
+[data-area="internal"] .tab,
+[data-area="internal"] .badge,
+[data-area="internal"] .win-title {
+  font-weight: 600;
 }

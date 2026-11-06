@@ -13,7 +13,7 @@ export function SiteHeader() {
           <span className="border-line bg-acc grid h-10 w-10 place-items-center border-4" aria-hidden="true">
             <span className="diamond" style={{ width: 12, height: 12 }} />
           </span>
-          <span className="font-pixel text-lg tracking-wide uppercase">PanitiaPintar</span>
+          <span className="font-display text-lg tracking-wide">PanitiaPintar</span>
         </Link>
         <nav aria-label="Navigasi utama" className="flex items-center gap-1">
           <a href="#acara" className="nav-link hidden md:inline-flex">

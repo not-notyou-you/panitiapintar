@@ -5,7 +5,7 @@ export function SiteFooter() {
     <footer className="site-footer">
       <div className="mx-auto grid max-w-[1180px] gap-6 px-4 py-8 sm:grid-cols-3 sm:px-7">
         <div className="flex flex-col gap-2">
-          <span className="font-pixel text-base uppercase">PanitiaPintar</span>
+          <span className="font-display text-base">PanitiaPintar</span>
           <p className="text-mut m-0 text-xs leading-relaxed">
             Chatbot tanya jawab acara kampus yang menjawab dari dokumen resmi panitia.
           </p>

@@ -34,8 +34,9 @@ body:has(> [data-area="public"]) {
   min-height: 100dvh;
   background: linear-gradient(to bottom, var(--bg) 0 72%, var(--floor) 72%);
   color: var(--tx);
-  font-family: var(--font-mono);
-  font-size: 14px;
+  font-family: var(--font-sans);
+  font-size: 15px;
+  line-height: 1.6;
 }
 
 /* Pixel mountain on the floor (INTERFACE §2 "Bentuk dan kedalaman"). */
@@ -59,8 +60,8 @@ body:has(> [data-area="public"])::before {
 [data-area="public"] h2,
 [data-area="public"] h3,
 [data-area="public"] button,
-[data-area="public"] .font-pixel {
-  font-family: var(--font-pixel);
+[data-area="public"] .font-display {
+  font-family: var(--font-display);
 }
 
 [data-area="public"] :focus-visible {
@@ -92,7 +93,7 @@ body:has(> [data-area="public"])::before {
   background: var(--acc);
   color: var(--on-acc);
   border-bottom: 4px solid var(--line);
-  font-family: var(--font-pixel);
+  font-family: var(--font-display);
   font-size: 13px;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -192,7 +193,7 @@ body:has(> [data-area="public"])::before {
   padding: 6px 10px;
   border: 3px solid var(--line);
   background: var(--card-hi);
-  font-family: var(--font-mono);
+  font-family: var(--font-sans);
   font-size: 12px;
   text-align: left;
   cursor: pointer;
@@ -260,7 +261,7 @@ body:has(> [data-area="public"])::before {
 
 [data-area="public"] .src-label {
   margin-right: 6px;
-  font-family: var(--font-pixel);
+  font-family: var(--font-display);
   color: var(--acc);
 }
 
@@ -306,7 +307,7 @@ body:has(> [data-area="public"])::before {
   padding: 10px;
   border: 3px solid var(--line);
   background: #fff;
-  font-family: var(--font-mono);
+  font-family: var(--font-sans);
   font-size: 13px;
   box-shadow: inset 3px 3px 0 var(--card-lo);
 }
@@ -355,7 +356,7 @@ body:has(> [data-area="public"]):has(.site-nav)::before {
   min-height: 44px;
   align-items: center;
   padding: 0 12px;
-  font-family: var(--font-pixel);
+  font-family: var(--font-display);
   font-size: 13px;
   text-transform: uppercase;
   color: var(--tx);
@@ -411,13 +412,13 @@ body:has(> [data-area="public"]):has(.site-nav)::before {
   background: var(--acc);
   color: var(--on-acc);
   border-bottom: 4px solid var(--line);
-  font-family: var(--font-pixel);
+  font-family: var(--font-display);
   font-size: 12px;
   text-transform: uppercase;
 }
 
 [data-area="public"] .event-card-cta {
-  font-family: var(--font-pixel);
+  font-family: var(--font-display);
   font-size: 13px;
   text-transform: uppercase;
   color: var(--acc);
@@ -430,7 +431,7 @@ body:has(> [data-area="public"]):has(.site-nav)::before {
   height: 44px;
   background: var(--acc);
   color: var(--on-acc);
-  font-family: var(--font-pixel);
+  font-family: var(--font-display);
   font-size: 22px;
 }
 
@@ -447,4 +448,26 @@ body:has(> [data-area="public"]):has(.site-nav)::before {
   height: 10px;
   background: var(--flag);
   border: 2px solid var(--line);
+}
+
+/* Codes (requestId, ids) keep a monospace face so characters are unambiguous. */
+[data-area="public"] code,
+[data-area="public"] pre {
+  font-family: var(--font-mono);
+}
+
+/* Headings and short display text read better slightly heavier in a sans face. */
+[data-area="public"] h1,
+[data-area="public"] h2,
+[data-area="public"] h3 {
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+[data-area="public"] .font-display,
+[data-area="public"] button,
+[data-area="public"] .btn,
+[data-area="public"] .tab,
+[data-area="public"] .badge,
+[data-area="public"] .win-title {
+  font-weight: 600;
 }

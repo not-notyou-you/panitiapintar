@@ -4,8 +4,8 @@ import { useState, useTransition } from "react";
 import { requestMagicLinkAction } from "@/app/(internal)/login/actions";
 import { Button } from "@/components/internal/ui/Button";
 
-export function LoginForm({ next }: { next?: string }) {
-  const [email, setEmail] = useState("");
+export function LoginForm({ next, initialEmail = "" }: { next?: string; initialEmail?: string }) {
+  const [email, setEmail] = useState(initialEmail);
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [pending, start] = useTransition();
 

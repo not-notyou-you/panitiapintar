@@ -52,11 +52,11 @@ Merah hanya untuk peringatan dan error, tidak pernah sebagai warna dekoratif.
 
 | Peran | Font | Ukuran |
 |---|---|---|
-| Judul halaman, title bar, tombol, tab, badge, label | **Pixelify Sans** | 11–20 px, sering kapital |
-| Isi chat, isi dokumen, tabel, input | **IBM Plex Mono** | 13–14 px |
-| Angka metrik | Pixelify Sans | 26 px |
+| Semua teks UI (isi chat, dokumen, tabel, input, tombol) | **Plus Jakarta Sans** (`font-sans`) | 15 px isi, line-height 1.6 |
+| Judul, title bar, tombol, tab, badge (`font-display`) | Plus Jakarta Sans 600–700 | judul besar tanpa huruf kapital semua; label pendek boleh kapital |
+| Kode (`requestId`, id) | IBM Plex Mono (`font-mono`) | 11–13 px |
 
-Font piksel hanya untuk elemen pendek. Teks panjang (jawaban chatbot, dokumen) memakai IBM Plex Mono agar tetap nyaman dibaca. Keduanya dari Google Fonts.
+Font piksel (Pixelify Sans) dan monospace untuk isi diganti pada 2026-11-06 karena melelahkan dibaca. Font dimuat sekali di `app/layout.tsx`; tiap area boleh memakai font lain di layout areanya (§9).
 
 ### Animasi
 

@@ -76,11 +76,11 @@ export default async function LogsPage({ searchParams }: Props) {
       body = (
         <div className="flex flex-col gap-5">
           <section className="flex flex-col gap-2">
-            <h2 className="font-pixel m-0 text-sm uppercase">Akses ditolak &amp; kanari</h2>
+            <h2 className="font-display m-0 text-sm">Akses ditolak &amp; kanari</h2>
             <AuditTable rows={sec.denied} f={f} names={names} />
           </section>
           <section className="flex flex-col gap-2">
-            <h2 className="font-pixel m-0 text-sm uppercase">Batas permintaan terlampaui</h2>
+            <h2 className="font-display m-0 text-sm">Batas permintaan terlampaui</h2>
             <p className="text-mut m-0 text-xs">
               Jendela rate limit disimpan 2 hari; kunci berupa hash/ID, bukan IP.
             </p>
@@ -254,7 +254,7 @@ function AuditTable({ rows, f, names }: { rows: AuditRow[]; f: LogFilter; names:
       {selected ? (
         <aside className="win p-3" aria-label="Detail catatan">
           <div className="flex items-center justify-between gap-2">
-            <strong className="font-pixel text-sm">{selected.action}</strong>
+            <strong className="font-display text-sm">{selected.action}</strong>
             <Link href={href(f, { detail: undefined })} scroll={false} aria-label="Tutup detail">
               x
             </Link>
@@ -280,7 +280,7 @@ function AuditTable({ rows, f, names }: { rows: AuditRow[]; f: LogFilter; names:
               {selected.request_id ? <CopyButton value={selected.request_id} /> : null}
             </dd>
           </dl>
-          <p className="font-pixel m-0 mt-3 text-xs uppercase">metadata</p>
+          <p className="font-display m-0 mt-3 text-xs uppercase">metadata</p>
           <pre className="pane m-0 mt-1">{JSON.stringify(selected.metadata, null, 2)}</pre>
         </aside>
       ) : null}
@@ -305,7 +305,7 @@ function AiPanel({ stats }: { stats: AiStats }) {
         <StatCard label="Error / fallback" value={`${pct(stats.errorRate)} / ${pct(stats.fallbackRate)}`} />
       </div>
       <figure className="m-0 flex flex-col gap-2">
-        <figcaption className="font-pixel text-sm uppercase">
+        <figcaption className="font-display text-sm uppercase">
           Panggilan per jam (24 jam terakhir, WIB)
         </figcaption>
         <div className="overflow-x-auto">
@@ -335,7 +335,7 @@ function AiPanel({ stats }: { stats: AiStats }) {
         </div>
       </figure>
       <section className="flex flex-col gap-2">
-        <h2 className="font-pixel m-0 text-sm uppercase">Token per hari</h2>
+        <h2 className="font-display m-0 text-sm">Token per hari</h2>
         {stats.tokensPerDay.length === 0 ? (
           <p className="text-mut m-0 text-xs">Belum ada panggilan.</p>
         ) : (
@@ -367,7 +367,7 @@ function StatCard({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex flex-col gap-1 bg-[var(--card-hi)] p-3">
       <span className="text-mut text-xs">{label}</span>
-      <span className="font-pixel text-2xl">{value}</span>
+      <span className="font-display text-2xl">{value}</span>
     </div>
   );
 }

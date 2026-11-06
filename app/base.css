@@ -21,7 +21,8 @@
   --color-warn: var(--warn);
   --color-warn-bg: var(--warn-bg);
   --color-flag: var(--flag);
-  --font-pixel: var(--font-pixelify), monospace;
+  --font-display: var(--font-jakarta), system-ui, sans-serif;
+  --font-sans: var(--font-jakarta), system-ui, sans-serif;
   --font-mono: var(--font-plex-mono), ui-monospace, monospace;
   --radius-*: initial;
 }

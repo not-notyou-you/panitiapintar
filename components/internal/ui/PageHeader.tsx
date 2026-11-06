@@ -12,7 +12,7 @@ export function PageHeader({ subtitle }: { subtitle?: string }) {
           <span className="diamond text-on-acc" style={{ width: 14, height: 14 }} />
         </span>
         <span>
-          <span className="font-pixel block text-xl tracking-wide uppercase">PanitiaPintar</span>
+          <span className="font-display block text-xl tracking-wide">PanitiaPintar</span>
           {subtitle ? <span className="text-mut block text-xs">{subtitle}</span> : null}
         </span>
       </Link>
