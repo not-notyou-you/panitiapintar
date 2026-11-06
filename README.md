@@ -38,18 +38,86 @@ Platform chatbot berbasis dokumen untuk banyak kepanitiaan acara kampus.
 
 Next.js 15 (App Router, TypeScript) · Supabase (Postgres, Auth, Storage, RLS) · Gemini API (`@google/genai`) · zod · pino · Tailwind CSS · vitest · Playwright · Vercel
 
-## Menjalankan secara lokal
+## Menjalankan secara lokal (dari nol)
 
-Prasyarat: Node 20+, Docker (untuk Supabase lokal), Supabase CLI.
+Panduan ini untuk laptop yang belum terpasang apa pun. Perkiraan waktu: 30–45 menit, sebagian besar menunggu unduhan Docker.
+
+### 1. Pasang perangkat
+
+| Perangkat                                                         | Versi                  | Catatan                                                                           |
+| ----------------------------------------------------------------- | ---------------------- | --------------------------------------------------------------------------------- |
+| [Git](https://git-scm.com/downloads)                              | terbaru                | Windows: pakai Git Bash untuk perintah di bawah                                   |
+| [Node.js](https://nodejs.org/)                                    | 20 LTS atau lebih baru | Cek: `node -v`                                                                    |
+| [Docker Desktop](https://www.docker.com/products/docker-desktop/) | terbaru                | Windows: aktifkan WSL 2 saat instalasi. Untuk menjalankan database Supabase lokal |
+| Editor                                                            | —                      | Disarankan VS Code + ekstensi ESLint dan Tailwind CSS                             |
+
+Supabase CLI **tidak perlu dipasang terpisah**: sudah ikut sebagai dev dependency dan dipanggil lewat `npx supabase`.
+
+Setelah memasang Docker Desktop, buka aplikasinya dan tunggu sampai statusnya _Engine running_. Supaya tidak lupa setelah restart: Settings → General → centang _Start Docker Desktop when you sign in_.
+
+### 2. Ambil kode dan pasang dependensi
 
 ```bash
-git clone <repo-url> panitiapintar && cd panitiapintar
-npm ci
-cp .env.example .env.local      # isi variabel di bawah
-npx supabase start
-npx supabase db reset           # migrasi + seed 3 acara dummy
-npm run dev                     # http://localhost:3000
+git clone <repo-url> panitiapintar
+cd panitiapintar
+npm ci                                  # pasang dependensi persis sesuai package-lock.json
+git config core.hooksPath .githooks     # sekali per clone: pemindai rahasia sebelum commit
 ```
+
+### 3. Nyalakan Supabase lokal
+
+```bash
+npx supabase start      # pertama kali mengunduh image ±2–3 GB, beberapa menit
+npx supabase db reset   # buat tabel + isi 3 acara dummy dan 5 akun uji
+npx supabase status     # tampilkan URL dan kunci untuk langkah 4
+```
+
+Dari `supabase status`, catat **API URL** (`http://127.0.0.1:54321`), **anon key**, dan **service_role key**. Supabase Studio (lihat isi database lewat browser) ada di `http://127.0.0.1:54323`.
+
+### 4. Isi `.env.local`
+
+```bash
+cp .env.example .env.local
+```
+
+Isi seperti ini untuk lokal:
+
+```dotenv
+APP_URL=http://localhost:3000
+APP_ENV=development
+
+NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321
+NEXT_PUBLIC_SUPABASE_ANON_KEY=<anon key dari supabase status>
+SUPABASE_SERVICE_ROLE_KEY=<service_role key dari supabase status>
+
+# Tanpa kunci Gemini: AI_MOCK=true dan GEMINI_API_KEY diisi apa saja (mis. mock).
+# Dengan kunci asli (gratis di https://aistudio.google.com/apikey): AI_MOCK=false.
+GEMINI_API_KEY=mock
+GEMINI_MODEL_REFINE=gemini-3.6-flash
+GEMINI_MODEL_CHAT=gemini-3.1-flash-lite
+AI_MOCK=true
+
+IP_HASH_SALT=<acak, min. 32 karakter>
+CRON_SECRET=<acak, min. 16 karakter>
+LOG_LEVEL=debug
+TURNSTILE_ENABLED=false
+```
+
+Membuat nilai acak: `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`. File `.env.local` **jangan di-commit** dan kuncinya jangan dikirim ke grup chat.
+
+Aplikasi memeriksa semua variabel saat start; jika ada yang kurang atau salah, pesan error menyebut nama variabelnya.
+
+### 5. Jalankan
+
+```bash
+npm run dev     # http://localhost:3000
+```
+
+Cek cepat:
+
+- `http://localhost:3000` menampilkan 3 acara fiktif.
+- `http://localhost:3000/api/health` membalas `"status":"ok"`.
+- `http://localhost:3000/login`: klik salah satu akun uji, lalu **Masuk**.
 
 Akun seed (email `@contoh.test`) masuk dengan email + kata sandi `panitia-uji-2026` (hanya untuk seed lokal; daftarnya juga tampil di `/login` di luar produksi):
 
@@ -59,7 +127,40 @@ Akun seed (email `@contoh.test`) masuk dengan email + kata sandi `panitia-uji-20
 | `admin.festek@contoh.test` · `admin.lomba@contoh.test` · `admin.seminar@contoh.test` | Admin satu acara                               |
 | `anggota.festek@contoh.test`                                                         | Anggota Festival Teknologi Fiktif (`/panitia`) |
 
-Tanpa kunci Gemini, set `AI_MOCK=true` di `.env.local` (jawaban tiruan deterministik; ditolak di production). Aktifkan pemindai rahasia sebelum commit sekali per clone: `git config core.hooksPath .githooks`.
+### 6. Jalankan test (sebelum push)
+
+```bash
+npx playwright install chromium   # sekali saja, untuk test e2e
+npm run lint && npm run typecheck
+npm run test                      # unit, tanpa database
+npm run test:security             # butuh Supabase lokal menyala
+npm run test:e2e                  # menyalakan server sendiri di port 3100 (AI_MOCK)
+```
+
+Test security dan e2e membuat acara/akun uji di database. Bersihkan lagi dengan `npx supabase db reset`.
+
+### Sehari-hari
+
+```bash
+# buka Docker Desktop dulu
+npx supabase start
+npm run dev
+```
+
+Selesai bekerja: `npx supabase stop` (data tetap tersimpan).
+
+### Masalah yang sering terjadi
+
+| Gejala                                                       | Penyebab dan solusi                                                                                                       |
+| ------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------- |
+| Beranda kosong / "tidak ada acara"                           | Supabase belum menyala atau database belum diisi: buka Docker Desktop, `npx supabase start`, lalu `npx supabase db reset` |
+| `supabase start` error `Cannot connect to the Docker daemon` | Docker Desktop belum dibuka / masih loading                                                                               |
+| Port 54321/54322 sudah dipakai                               | Proyek Supabase lain masih jalan: jalankan `npx supabase stop` di folder proyek tersebut                                  |
+| Error `Invalid environment` saat `npm run dev`               | Ada variabel `.env.local` yang kosong atau terlalu pendek; baca nama variabel di pesan error                              |
+| Login "Email atau kata sandi salah" untuk akun uji           | Seed belum masuk: `npx supabase db reset`                                                                                 |
+| "Terlalu banyak percobaan masuk"                             | Batas 5 kali/jam. Di lokal: `npx supabase db reset`                                                                       |
+| Chatbot menjawab aneh/seragam                                | `AI_MOCK=true` memang jawaban tiruan. Pakai kunci Gemini asli untuk jawaban sungguhan                                     |
+| Lint gagal karena folder `.next-*`                           | Hapus folder build lama (`.next-e2e`, `.next-eval`)                                                                       |
 
 ### Variabel lingkungan
 
