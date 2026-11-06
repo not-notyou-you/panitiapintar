@@ -70,6 +70,7 @@ describe("ai client", () => {
     expect(res).toMatchObject({ status: "ok", model: "model-chat", fallbackUsed: false });
     expect(res.status === "ok" && res.value).toEqual({
       kind: "answer",
+      answered: true,
       answer: "Lokasi di Aula C.",
       sourceDocIds: ["d1"],
     });
@@ -193,9 +194,9 @@ describe("parseChatPublicOutput", () => {
     ['{"answer":"NOT_FOUND","source_doc_ids":[]}', { kind: "not_found" }],
     [
       '```json\n{"answer":"Ya.","source_doc_ids":["a"]}\n```',
-      { kind: "answer", answer: "Ya.", sourceDocIds: ["a"] },
+      { kind: "answer", answered: true, answer: "Ya.", sourceDocIds: ["a"] },
     ],
-    ['{"answer":"Ya."}', { kind: "answer", answer: "Ya.", sourceDocIds: [] }],
+    ['{"answer":"Ya."}', { kind: "answer", answered: true, answer: "Ya.", sourceDocIds: [] }],
   ])("parses %s", (raw, expected) => {
     expect(parseChatPublicOutput(raw)).toEqual({ ok: true, value: expected });
   });

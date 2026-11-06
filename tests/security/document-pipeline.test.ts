@@ -41,7 +41,11 @@ describe.skipIf(!dbAvailable)("document pipeline (mock Gemini)", () => {
       uploadRequest({
         committeeId: a.A.id,
         title: "Panduan",
-        file: { name: "p.md", type: "text/markdown", bytes: new TextEncoder().encode(`${text}\n<!-- ${randomUUID()} -->`) },
+        file: {
+          name: "p.md",
+          type: "text/markdown",
+          bytes: new TextEncoder().encode(`${text}\n<!-- ${randomUUID()} -->`),
+        },
       }),
       uploadDeps(a.admin.client),
     );
@@ -50,7 +54,12 @@ describe.skipIf(!dbAvailable)("document pipeline (mock Gemini)", () => {
   }
 
   const run = (id: string, ai: ReturnType<typeof client>["ai"]) =>
-    refineDocument(id, { svc: service(), log: captureLogger().log, requestId: requestId(), generate: (i) => ai.generate(i) });
+    refineDocument(id, {
+      svc: service(),
+      log: captureLogger().log,
+      requestId: requestId(),
+      generate: (i) => ai.generate(i),
+    });
 
   it("sukses → versi ai_refined (teredaksi) dan status needs_review", async () => {
     const id = await upload("# Lokasi\nGedung C lantai 2, jam 08.00. Kontak panitia@contoh.test");
@@ -82,7 +91,12 @@ describe.skipIf(!dbAvailable)("document pipeline (mock Gemini)", () => {
     });
     const { ai } = client(async () => ({ text: leak }));
     expect(await run(id, ai)).toBe("needs_review");
-    const { data } = await service().from("document_versions").select("content").eq("document_id", id).eq("kind", "ai_refined").single();
+    const { data } = await service()
+      .from("document_versions")
+      .select("content")
+      .eq("document_id", id)
+      .eq("kind", "ai_refined")
+      .single();
     expect(data!.content).toContain("[NOMOR_HP]");
     expect(data!.content).not.toContain("0812-0000-7777");
   });
@@ -91,11 +105,18 @@ describe.skipIf(!dbAvailable)("document pipeline (mock Gemini)", () => {
     const id = await upload("# Info\n[[mock:invalid]]");
     const { ai } = client();
     expect(await run(id, ai)).toBe("refine_failed");
-    expect(await getDocument(id)).toMatchObject({ status: "refine_failed", status_reason: "ai_invalid_output" });
+    expect(await getDocument(id)).toMatchObject({
+      status: "refine_failed",
+      status_reason: "ai_invalid_output",
+    });
 
     const scheduled: string[] = [];
     const deps = uploadDeps(a.admin.client, scheduled);
-    const res = await handleRefineRetry(new Request("http://x", { method: "POST", headers: { origin: ORIGIN } }), id, deps);
+    const res = await handleRefineRetry(
+      new Request("http://x", { method: "POST", headers: { origin: ORIGIN } }),
+      id,
+      deps,
+    );
     expect(res.status).toBe(202);
     expect(scheduled).toEqual([id]);
     expect((await getDocument(id)).status).toBe("refining");
@@ -127,7 +148,11 @@ describe.skipIf(!dbAvailable)("document pipeline (mock Gemini)", () => {
     const id = await upload("# Info\nmacet");
     const doc = await getDocument(id);
     expect(
-      await failIfStale(service(), doc as never, Date.parse(doc.updated_at as string) + STALE_REFINING_MS + 1),
+      await failIfStale(
+        service(),
+        doc as never,
+        Date.parse(doc.updated_at as string) + STALE_REFINING_MS + 1,
+      ),
     ).toBe(true);
     const res = await handleStatus(id, { ...uploadDeps(a.member.client), svc: service() });
     expect(await res.json()).toMatchObject({ status: "refine_failed", statusReason: "timeout" });

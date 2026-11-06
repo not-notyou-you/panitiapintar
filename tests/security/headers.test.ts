@@ -55,7 +55,8 @@ describe("middleware security headers", () => {
 
   it("built middleware bundle contains no unsafe-eval", () => {
     const dir = path.resolve(".next/server");
-    if (!existsSync(path.join(dir, "middleware.js"))) return; // only checked after `next build`
+    // Only a production build counts: `next dev` also writes .next/server but always allows eval.
+    if (!existsSync(path.resolve(".next/BUILD_ID")) || !existsSync(path.join(dir, "middleware.js"))) return;
     const files = walk(dir).filter((f) => /middleware|edge-chunks/.test(f) && f.endsWith(".js"));
     expect(files.length).toBeGreaterThan(0);
     for (const f of files) expect(readFileSync(f, "utf8"), f).not.toContain("unsafe-eval");

@@ -10,6 +10,9 @@ export interface TransportRequest {
   system: string;
   prompt: string;
   signal: AbortSignal;
+  /** Sampling settings per purpose (GENERATION in lib/ai/client.ts). */
+  temperature: number;
+  maxOutputTokens: number;
 }
 
 export interface TransportResponse {

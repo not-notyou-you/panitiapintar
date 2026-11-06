@@ -79,7 +79,7 @@ describe.skipIf(!dbAvailable)("Mode Panitia", () => {
       containsInternal: boolean;
       sources: { documentId: string }[];
     };
-    expect(body.answered).toBe(true);
+    expect(body.answered, JSON.stringify(body)).toBe(true);
     expect(body.sources.map((s) => s.documentId)).toEqual([int.id]);
     expect(body.containsInternal).toBe(true);
   });

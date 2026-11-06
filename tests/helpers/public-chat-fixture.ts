@@ -35,7 +35,7 @@ type Gen = (input: GenerateInput<ChatPublicOutput>) => Promise<GenerateResult<Ch
 export const answer = (text: string, ids: string[] = [DOCS[0]!.document_id]): Gen =>
   vi.fn(async () => ({
     status: "ok" as const,
-    value: { kind: "answer" as const, answer: text, sourceDocIds: ids },
+    value: { kind: "answer" as const, answered: true, answer: text, sourceDocIds: ids },
     model: "m",
     fallbackUsed: false,
   }));
@@ -73,6 +73,10 @@ export function run(
     ...overrides,
     generate,
   };
-  const input = publicChatRequestSchema.parse({ slug: COMMITTEE.slug, message: "Di mana lokasinya?", ...body });
+  const input = publicChatRequestSchema.parse({
+    slug: COMMITTEE.slug,
+    message: "Di mana lokasinya?",
+    ...body,
+  });
   return handlePublicChat(input, deps).then((result) => ({ result, logs, chatLogs, audits, generate }));
 }

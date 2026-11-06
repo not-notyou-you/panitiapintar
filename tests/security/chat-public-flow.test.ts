@@ -69,14 +69,19 @@ describe("public chat flow", () => {
           seenPrompt = input.system + input.prompt;
           return {
             status: "ok",
-            value: { kind: "answer", answer: `Hubungi ${PII.phone}.`, sourceDocIds: [] },
+            value: { kind: "answer", answered: true, answer: `Hubungi ${PII.phone}.`, sourceDocIds: [] },
             model: "m",
             fallbackUsed: false,
           };
         },
       },
     );
-    const everything = [seenPrompt, logs.output(), JSON.stringify(chatLogs), JSON.stringify(result.body)].join("\n");
+    const everything = [
+      seenPrompt,
+      logs.output(),
+      JSON.stringify(chatLogs),
+      JSON.stringify(result.body),
+    ].join("\n");
     for (const v of Object.values(PII)) expect(everything).not.toContain(v);
     expect(result.body).toMatchObject({ answer: "Hubungi [NOMOR_HP]." });
     expect(chatLogs[0]?.question_redacted).toBe("Nomorku [NOMOR_HP], emailku [EMAIL]. Lokasi di mana?");
@@ -90,9 +95,36 @@ describe("public chat flow", () => {
     expect(logs.output()).not.toContain("Aula Utama");
   });
 
+  it("a friendly reply flagged answered=false keeps its text, adds the official contact, logs as unanswered", async () => {
+    const { result, chatLogs } = await run(
+      { message: "Berapa honor MC?" },
+      {
+        generate: async () => ({
+          status: "ok",
+          value: {
+            kind: "answer",
+            answered: false,
+            answer: "Maaf, info honor MC belum ada di dokumen.",
+            sourceDocIds: [],
+          },
+          model: "m",
+          fallbackUsed: false,
+        }),
+      },
+    );
+    expect(result.body).toMatchObject({ answered: false, sources: [] });
+    const answer = (result.body as { answer: string }).answer;
+    expect(answer).toContain("Maaf, info honor MC belum ada di dokumen.");
+    expect(answer).toContain("Narahubung resmi: Instagram @festekfiktif");
+    expect(chatLogs[0]?.answered).toBe(false);
+  });
+
   it("returns 404 for an unknown committee", async () => {
     const { result } = await run({}, { findCommittee: async () => null });
-    expect(result).toMatchObject({ status: 404, body: { error: { code: "NOT_FOUND", requestId: REQUEST_ID } } });
+    expect(result).toMatchObject({
+      status: 404,
+      body: { error: { code: "NOT_FOUND", requestId: REQUEST_ID } },
+    });
   });
 
   it("returns 404 for an archived committee without calling the AI", async () => {

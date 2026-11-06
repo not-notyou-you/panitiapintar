@@ -18,13 +18,20 @@ describe.skipIf(!dbAvailable)("audit_logs", () => {
   });
 
   it("approve dan ubah visibilitas menulis audit dengan request_id", async () => {
-    const d = await createDocument({ committeeId: a.A.id, title: "Aud", visibility: "internal", status: "needs_review" });
+    const d = await createDocument({
+      committeeId: a.A.id,
+      title: "Aud",
+      visibility: "internal",
+      status: "needs_review",
+    });
     const c1 = ctxFor(a.admin.client).ctx;
     const r1 = await approveDocument({ documentId: d.id, expectedVersion: d.version }, c1);
     expect(r1.ok).toBe(true);
     const v = (await getDocument(d.id)).version;
     const c2 = ctxFor(a.admin.client).ctx;
-    expect((await setVisibility({ documentId: d.id, expectedVersion: v, visibility: "public" }, c2)).ok).toBe(true);
+    expect((await setVisibility({ documentId: d.id, expectedVersion: v, visibility: "public" }, c2)).ok).toBe(
+      true,
+    );
     const rows = await auditRows(d.id);
     expect(rows.map((r) => [r.action, r.request_id, r.actor_id])).toEqual([
       ["document.approve", c1.requestId, a.admin.id],
@@ -34,8 +41,16 @@ describe.skipIf(!dbAvailable)("audit_logs", () => {
   });
 
   it("reject menulis audit dengan kategori alasan", async () => {
-    const d = await createDocument({ committeeId: a.A.id, title: "Rej", visibility: "internal", status: "needs_review" });
-    const r = await rejectDocument({ documentId: d.id, expectedVersion: d.version, reasonCategory: "tidak_akurat" }, ctxFor(a.admin.client).ctx);
+    const d = await createDocument({
+      committeeId: a.A.id,
+      title: "Rej",
+      visibility: "internal",
+      status: "needs_review",
+    });
+    const r = await rejectDocument(
+      { documentId: d.id, expectedVersion: d.version, reasonCategory: "tidak_akurat" },
+      ctxFor(a.admin.client).ctx,
+    );
     expect(r.ok).toBe(true);
     expect((await auditRows(d.id)).map((x) => [x.action, x.metadata.reasonCategory])).toEqual([
       ["document.reject", "tidak_akurat"],
@@ -43,7 +58,12 @@ describe.skipIf(!dbAvailable)("audit_logs", () => {
   });
 
   it("gagal menulis audit = aksi dibatalkan (transaksi RPC)", async () => {
-    const d = await createDocument({ committeeId: a.A.id, title: "Rollback", visibility: "internal", status: "needs_review" });
+    const d = await createDocument({
+      committeeId: a.A.id,
+      title: "Rollback",
+      visibility: "internal",
+      status: "needs_review",
+    });
     // A request id the audit check refuses makes the RPC raise before commit: nothing may change.
     const ctx = ctxFor(a.admin.client).ctx;
     const bad = { ...ctx, requestId: "bukan-request-id" };
@@ -68,14 +88,21 @@ describe.skipIf(!dbAvailable)("audit_logs", () => {
   it("undang & ubah peran anggota tercatat tanpa email mentah", async () => {
     const invitee = await createUser("aud-invitee");
     const { ctx, lines } = ctxFor(a.admin.client);
-    const r = await inviteMember({ committeeId: a.A.id, email: invitee.email, role: "member" }, ctx, async () => ({
-      userId: invitee.id,
-      invited: false,
-    }));
+    const r = await inviteMember(
+      { committeeId: a.A.id, email: invitee.email, role: "member" },
+      ctx,
+      async () => ({
+        userId: invitee.id,
+        invited: false,
+      }),
+    );
     expect(r.ok).toBe(true);
     expect(lines.join("\n")).not.toContain(invitee.email);
     expect(lines.join("\n")).toContain('"emailHash"');
-    const rc = await changeMemberRole({ committeeId: a.A.id, userId: invitee.id, role: "admin" }, ctxFor(a.admin.client).ctx);
+    const rc = await changeMemberRole(
+      { committeeId: a.A.id, userId: invitee.id, role: "admin" },
+      ctxFor(a.admin.client).ctx,
+    );
     expect(rc.ok).toBe(true);
     const rows = await auditRows(invitee.id);
     expect(rows.map((x) => x.action)).toEqual(["membership.add", "membership.role_change"]);

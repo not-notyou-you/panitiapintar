@@ -67,14 +67,22 @@ describe.skipIf(!dbAvailable)("POST /api/chat/public (route + DB + mock AI)", ()
   it("answers from public docs only, with one requestId across header, ai_calls and chat_logs", async () => {
     const res = await post(`10.1.${Math.floor(Math.random() * 250)}.${Math.floor(Math.random() * 250)}`);
     expect(res.status).toBe(200);
-    const body = (await res.json()) as { answer: string; answered: boolean; sources: { documentId: string }[]; requestId: string };
+    const body = (await res.json()) as {
+      answer: string;
+      answered: boolean;
+      sources: { documentId: string }[];
+      requestId: string;
+    };
     expect(body.answered).toBe(true);
     expect(body.sources.map((s) => s.documentId)).toEqual([docId]);
     expect(body.answer).not.toContain("CANARY");
     expect(res.headers.get("x-request-id")).toBe(body.requestId);
 
     const svc = service();
-    const ai = await svc.from("ai_calls").select("request_id, status, purpose").eq("request_id", body.requestId);
+    const ai = await svc
+      .from("ai_calls")
+      .select("request_id, status, purpose")
+      .eq("request_id", body.requestId);
     const chat = await svc.from("chat_logs").select("request_id, answered").eq("request_id", body.requestId);
     expect(ai.data).toEqual([{ request_id: body.requestId, status: "ok", purpose: "chat_public" }]);
     expect(chat.data).toEqual([{ request_id: body.requestId, answered: true }]);
@@ -89,7 +97,10 @@ describe.skipIf(!dbAvailable)("POST /api/chat/public (route + DB + mock AI)", ()
     expect(retryAfter).toBeGreaterThanOrEqual(1);
     expect(retryAfter).toBeLessThanOrEqual(60);
     const body = (await res.json()) as { error: { code: string; message: string; requestId: string } };
-    expect(body.error).toMatchObject({ code: "RATE_LIMITED", message: "Chatbot sedang ramai. Coba lagi dalam 1 menit." });
+    expect(body.error).toMatchObject({
+      code: "RATE_LIMITED",
+      message: "Chatbot sedang ramai. Coba lagi dalam 1 menit.",
+    });
     expect(body.error.requestId).toBe(res.headers.get("x-request-id"));
   });
 

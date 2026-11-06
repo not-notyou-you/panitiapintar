@@ -33,19 +33,36 @@ describe.skipIf(!dbAvailable)("CSRF / Origin", () => {
   let docVersion: number;
   beforeAll(async () => {
     a = await setupActors("csrf");
-    const d = await createDocument({ committeeId: a.A.id, title: "csrf", visibility: "internal", status: "approved" });
+    const d = await createDocument({
+      committeeId: a.A.id,
+      title: "csrf",
+      visibility: "internal",
+      status: "approved",
+    });
     docId = d.id;
     docVersion = d.version;
   });
 
   const actions: [string, (ctx: ActionCtx) => Promise<ActionResult<unknown>>][] = [
     ["createCommittee", (c) => createCommittee({ name: "Acara X", slug: "csrf-x", contactPublic: "@x" }, c)],
-    ["updateCommittee", (c) => updateCommittee({ committeeId: a.A.id, name: "Acara Y", contactPublic: "@x" }, c)],
+    [
+      "updateCommittee",
+      (c) => updateCommittee({ committeeId: a.A.id, name: "Acara Y", contactPublic: "@x" }, c),
+    ],
     ["archiveCommittee", (c) => archiveCommittee({ committeeId: a.A.id }, c)],
     ["approveDocument", (c) => approveDocument({ documentId: docId, expectedVersion: docVersion }, c)],
-    ["rejectDocument", (c) => rejectDocument({ documentId: docId, expectedVersion: docVersion, reasonCategory: "lainnya" }, c)],
-    ["editApprovedDocument", (c) => editApprovedDocument({ documentId: docId, expectedVersion: docVersion, content: "x" }, c)],
-    ["setVisibility", (c) => setVisibility({ documentId: docId, expectedVersion: docVersion, visibility: "public" }, c)],
+    [
+      "rejectDocument",
+      (c) => rejectDocument({ documentId: docId, expectedVersion: docVersion, reasonCategory: "lainnya" }, c),
+    ],
+    [
+      "editApprovedDocument",
+      (c) => editApprovedDocument({ documentId: docId, expectedVersion: docVersion, content: "x" }, c),
+    ],
+    [
+      "setVisibility",
+      (c) => setVisibility({ documentId: docId, expectedVersion: docVersion, visibility: "public" }, c),
+    ],
     ["deleteDocument", (c) => deleteDocument({ documentId: docId }, c)],
     [
       "inviteMember",
@@ -54,7 +71,10 @@ describe.skipIf(!dbAvailable)("CSRF / Origin", () => {
           throw new Error("must not be reached");
         }),
     ],
-    ["changeMemberRole", (c) => changeMemberRole({ committeeId: a.A.id, userId: a.member.id, role: "admin" }, c)],
+    [
+      "changeMemberRole",
+      (c) => changeMemberRole({ committeeId: a.A.id, userId: a.member.id, role: "admin" }, c),
+    ],
     ["removeMember", (c) => removeMember({ committeeId: a.A.id, userId: a.member.id }, c)],
     [
       "requestMagicLink",
@@ -80,7 +100,11 @@ describe.skipIf(!dbAvailable)("CSRF / Origin", () => {
       const deps = uploadDeps(a.superAdmin.client);
       const res = await handleUpload(
         uploadRequest(
-          { committeeId: a.A.id, title: "x", file: { name: "x.txt", type: "text/plain", bytes: new TextEncoder().encode("x") } },
+          {
+            committeeId: a.A.id,
+            title: "x",
+            file: { name: "x.txt", type: "text/plain", bytes: new TextEncoder().encode("x") },
+          },
           { origin },
         ),
         deps,
@@ -91,7 +115,11 @@ describe.skipIf(!dbAvailable)("CSRF / Origin", () => {
 
     it("POST /api/documents/[id]/refine → 403", async () => {
       const headers: Record<string, string> = origin ? { origin } : {};
-      const res = await handleRefineRetry(new Request("http://x", { method: "POST", headers }), UUID, uploadDeps(a.superAdmin.client));
+      const res = await handleRefineRetry(
+        new Request("http://x", { method: "POST", headers }),
+        UUID,
+        uploadDeps(a.superAdmin.client),
+      );
       expect(res.status).toBe(403);
     });
 
@@ -111,12 +139,19 @@ describe.skipIf(!dbAvailable)("CSRF / Origin", () => {
 
     it("POST /auth/logout → 403", async () => {
       const headers: Record<string, string> = origin ? { origin } : {};
-      const res = await logout(new NextRequest(`${APP_URL}/auth/logout`, { method: "POST", headers }), undefined);
+      const res = await logout(
+        new NextRequest(`${APP_URL}/auth/logout`, { method: "POST", headers }),
+        undefined,
+      );
       expect(res.status).toBe(403);
     });
   });
 
   it("nothing changed after all rejected attempts", async () => {
-    expect(await getDocument(docId)).toMatchObject({ status: "approved", visibility: "internal", version: docVersion });
+    expect(await getDocument(docId)).toMatchObject({
+      status: "approved",
+      visibility: "internal",
+      version: docVersion,
+    });
   });
 });

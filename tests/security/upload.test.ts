@@ -32,14 +32,39 @@ describe.skipIf(!dbAvailable)("POST /api/documents/upload", () => {
   };
 
   it.each([
-    ["PDF palsu (isi PNG)", { name: "palsu.pdf", type: "application/pdf", bytes: PNG_BYTES }, 415, "bad_type"],
+    [
+      "PDF palsu (isi PNG)",
+      { name: "palsu.pdf", type: "application/pdf", bytes: PNG_BYTES },
+      415,
+      "bad_type",
+    ],
     ["ekstensi .exe", { name: "x.exe", type: "application/octet-stream", bytes: PNG_BYTES }, 415, "bad_type"],
     ["MIME tidak cocok", { name: "a.pdf", type: "text/plain", bytes: makePdf("Halo") }, 415, "bad_type"],
-    ["TXT biner", { name: "a.txt", type: "text/plain", bytes: new Uint8Array([0x41, 0, 0x42]) }, 415, "bad_type"],
-    ["DOCX bermakro", { name: "m.docx", type: DOCX_MIME, bytes: makeDocx(["Isi"], { macro: true }) }, 422, "macro"],
-    ["zip bomb", { name: "b.docx", type: DOCX_MIME, bytes: makeDocx(["Isi"], { bombBytes: 20_000_000 }) }, 422, "zip_bomb"],
+    [
+      "TXT biner",
+      { name: "a.txt", type: "text/plain", bytes: new Uint8Array([0x41, 0, 0x42]) },
+      415,
+      "bad_type",
+    ],
+    [
+      "DOCX bermakro",
+      { name: "m.docx", type: DOCX_MIME, bytes: makeDocx(["Isi"], { macro: true }) },
+      422,
+      "macro",
+    ],
+    [
+      "zip bomb",
+      { name: "b.docx", type: DOCX_MIME, bytes: makeDocx(["Isi"], { bombBytes: 20_000_000 }) },
+      422,
+      "zip_bomb",
+    ],
     ["ZIP tanpa word/document.xml", { name: "z.docx", type: DOCX_MIME, bytes: zipOnly() }, 415, "bad_type"],
-    ["PDF terenkripsi", { name: "e.pdf", type: "application/pdf", bytes: makePdf("Rahasia", { encrypt: true }) }, 422, "encrypted"],
+    [
+      "PDF terenkripsi",
+      { name: "e.pdf", type: "application/pdf", bytes: makePdf("Rahasia", { encrypt: true }) },
+      422,
+      "encrypted",
+    ],
   ])("menolak %s", async (_label, file, status, reason) => {
     const { res, body, deps } = await send(file);
     expect(res.status).toBe(status);
@@ -81,7 +106,11 @@ describe.skipIf(!dbAvailable)("POST /api/documents/upload", () => {
   });
 
   it("menolak duplikat (sha256 sama) dengan 409", async () => {
-    const file = { name: "dup.md", type: "text/markdown", bytes: new TextEncoder().encode(`# Dup ${randomUUID()}`) };
+    const file = {
+      name: "dup.md",
+      type: "text/markdown",
+      bytes: new TextEncoder().encode(`# Dup ${randomUUID()}`),
+    };
     expect((await send(file)).res.status).toBe(201);
     const second = await send(file);
     expect(second.res.status).toBe(409);
@@ -96,7 +125,11 @@ describe.skipIf(!dbAvailable)("POST /api/documents/upload", () => {
         uploadRequest({
           committeeId: quota.A.id,
           title: `Dok ${i}`,
-          file: { name: `d${i}.txt`, type: "text/plain", bytes: new TextEncoder().encode(`isi ${i} ${randomUUID()}`) },
+          file: {
+            name: `d${i}.txt`,
+            type: "text/plain",
+            bytes: new TextEncoder().encode(`isi ${i} ${randomUUID()}`),
+          },
         }),
         deps(),
       );

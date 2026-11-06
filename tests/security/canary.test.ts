@@ -42,7 +42,11 @@ describe("canary detection", () => {
       requestId: REQUEST_ID,
     });
     expect(audits).toEqual([
-      expect.objectContaining({ action: "security.canary_leaked", outcome: "failure", requestId: REQUEST_ID }),
+      expect.objectContaining({
+        action: "security.canary_leaked",
+        outcome: "failure",
+        requestId: REQUEST_ID,
+      }),
     ]);
     expect(chatLogs[0]).toMatchObject({ answered: false, source_doc_ids: [] });
   });

@@ -169,8 +169,13 @@ export async function handlePublicChat(
       answer = `${CANARY_MESSAGE} Hubungi narahubung: ${committee.contact_public}`;
       answered = false;
     } else {
-      answer = out.text;
-      answered = true;
+      answered = output.answered;
+      answer =
+        answered || out.text.includes(committee.contact_public)
+          ? out.text
+          : `${out.text}
+
+Narahubung resmi: ${committee.contact_public}`;
       const titles = new Map(docs.map((d) => [d.document_id, d.title]));
       const allowed = new Set(prompt.contextDocIds);
       sources = [...new Set(output.sourceDocIds)]

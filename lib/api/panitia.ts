@@ -157,7 +157,7 @@ export function handleInternalChat(req: Request, deps: PanitiaDeps): Promise<Res
       logPii(log, "output", out.found);
       mergeCounts(piiTypes, out.found);
       answer = out.text;
-      answered = true;
+      answered = result.value.answered;
       const byId = new Map(ctx.docs.map((d) => [d.document_id, d]));
       const allowed = new Set(prompt.contextDocIds);
       sources = [...new Set(result.value.sourceDocIds)]

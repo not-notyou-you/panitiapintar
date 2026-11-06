@@ -15,6 +15,19 @@ import {
 import { withAiLogging, type AiCallOutcome, type AiCallWriter } from "./with-ai-logging";
 
 export const AI_TIMEOUT_MS = 20_000;
+
+/**
+ * Sampling per purpose. Refine must reproduce facts exactly (low temperature); chat and generators
+ * may phrase, combine and suggest freely, because the prompt rules keep event facts tied to the
+ * documents and every output is redacted again.
+ */
+export const GENERATION: Record<AiPurpose, { temperature: number; maxOutputTokens: number }> = {
+  refine: { temperature: 0.2, maxOutputTokens: 8192 },
+  chat_public: { temperature: 0.7, maxOutputTokens: 1024 },
+  chat_internal: { temperature: 0.7, maxOutputTokens: 2048 },
+  rundown: { temperature: 0.8, maxOutputTokens: 4096 },
+  checklist: { temperature: 0.8, maxOutputTokens: 4096 },
+};
 const BACKOFF_BASE_MS = 400;
 const BACKOFF_JITTER_MS = 400;
 
@@ -81,6 +94,7 @@ export function createAiClient(deps: AiClientDeps) {
           system: input.system,
           prompt: input.prompt,
           signal: controller.signal,
+          ...GENERATION[input.purpose],
         }),
         timeout,
       ]);

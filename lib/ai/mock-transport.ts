@@ -148,7 +148,7 @@ export function mockTransport(): AiTransport {
           ? mockRundown(req.prompt)
           : req.prompt.includes("<checklist_request>")
             ? mockChecklist(req.prompt)
-            : mockAnswer(req.prompt, { internal: req.system.includes("asisten internal panitia") });
+            : mockAnswer(req.prompt, { internal: req.system.includes("dokumen publik dan internal panitia") });
       return {
         text,
         inputTokens: Math.ceil(req.prompt.length / 4),

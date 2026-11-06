@@ -25,14 +25,24 @@ describe.skipIf(!dbAvailable)("visibility", () => {
 
   it("menolak publik saat pii_summary versi terkini tidak kosong", async () => {
     const d = await make("approved");
-    must(await service().from("document_versions").update({ pii_summary: { phone: 1 } }).eq("id", d.versionId));
+    must(
+      await service()
+        .from("document_versions")
+        .update({ pii_summary: { phone: 1 } })
+        .eq("id", d.versionId),
+    );
     const r = await set(d.id, d.version);
     expect(r).toMatchObject({ ok: false, error: { code: "INVALID_INPUT" } });
   });
 
   it("RPC juga menolak PII tersisa walau pengecekan aplikasi dilewati (lapis kedua)", async () => {
     const d = await make("approved");
-    must(await service().from("document_versions").update({ pii_summary: { email: 2 } }).eq("id", d.versionId));
+    must(
+      await service()
+        .from("document_versions")
+        .update({ pii_summary: { email: 2 } })
+        .eq("id", d.versionId),
+    );
     const { error } = await a.admin.client.rpc("set_document_visibility", {
       p_doc: d.id,
       p_visibility: "public",
@@ -63,12 +73,19 @@ describe.skipIf(!dbAvailable)("visibility", () => {
     const after = await getDocument(d.id);
     expect(after).toMatchObject({ status: "needs_review", visibility: "internal", approved_by: null });
     // The edit was redacted before storage.
-    const { data } = await service().from("document_versions").select("content, kind, created_by").eq("id", edit.ok ? edit.data.versionId : "").single();
+    const { data } = await service()
+      .from("document_versions")
+      .select("content, kind, created_by")
+      .eq("id", edit.ok ? edit.data.versionId : "")
+      .single();
     expect(data).toMatchObject({ kind: "admin_edited", created_by: a.admin.id });
     expect(data!.content).toContain("[NOMOR_HP]");
 
     // Re-approve, then it can go public again.
-    const re = await approveDocument({ documentId: d.id, expectedVersion: after.version }, ctxFor(a.admin.client).ctx);
+    const re = await approveDocument(
+      { documentId: d.id, expectedVersion: after.version },
+      ctxFor(a.admin.client).ctx,
+    );
     expect(re.ok).toBe(true);
     const fin = await getDocument(d.id);
     expect(fin.status).toBe("approved");

@@ -23,8 +23,8 @@ export function geminiTransport(apiKey: string): AiTransport {
           config: {
             systemInstruction: req.system,
             responseMimeType: "application/json",
-            temperature: 0.2,
-            maxOutputTokens: 1024,
+            temperature: req.temperature,
+            maxOutputTokens: req.maxOutputTokens,
             abortSignal: req.signal,
           },
         });
